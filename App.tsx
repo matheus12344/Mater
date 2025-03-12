@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Dimensions, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Import icons
 
 const { width, height } = Dimensions.get('window');
 
 export default function App() {
   const [selectedTab, setSelectedTab] = useState('Viagem');
+  const [searchText, setSearchText] = useState('');
+  const [requestTime, setRequestTime] = useState('Agora');
 
   return (
     <View style={styles.container}>
@@ -21,11 +24,17 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
+      {/*barra de pesquisa para gerar a viagem */}
       <View style={styles.searchBar}> 
-        <View style={styles.icon} /> {/* Icone */}
-        <Text style={styles.searchText}>Para onde?</Text>
-        <TouchableOpacity style={styles.nowButton}>  
-          <Text style={styles.nowButtonText}>Agora</Text>
+        <Ionicons name="search" size={24} color="black" style={styles.icon} /> {/* Icone */}
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Para onde?"
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+        <TouchableOpacity style={styles.nowButton} onPress={() => setRequestTime(requestTime === 'Agora' ? 'Mais tarde' : 'Agora')}>  
+          <Text style={styles.nowButtonText}>{requestTime}</Text>
         </TouchableOpacity>
       </View>
       {/*<---------------------Fim do Header ------------------------>*/}
@@ -45,10 +54,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '80%',
     position: 'absolute',
-    top: height * 0.05,
+    top: height * 0.1,
   },
   tabText: {
-    fontSize: width * 0.05,
+    fontSize: width * 0.08,
   },
   selectedTab: {
     fontWeight: 'bold',
@@ -59,7 +68,7 @@ const styles = StyleSheet.create({
     width: '90%',
     height: height * 0.07,
     position: 'absolute',
-    top: height * 0.1,
+    top: height * 0.15,
     marginTop: height * 0.05,
     backgroundColor: 'lightgray',
     alignItems: 'center',
@@ -67,15 +76,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.05,
   },
   icon: {
-    backgroundColor: 'red',
-    width: width * 0.05,
-    height: width * 0.05,
-    borderRadius: width * 0.05,
+    marginRight: width * 0.02,
   },
-  searchText: {
-    padding: width * 0.05,
+  searchInput: {
+    flex: 1,
     fontSize: width * 0.04,
-    marginRight: 'auto',
   },
   nowButton: {
     backgroundColor: 'blue',

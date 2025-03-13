@@ -13,11 +13,15 @@ export default function App() {
 
   const handleSearch = (text: string): void => {
     setSearchText(text);
-    if (text) {
+  };
+
+  const handleSearchSubmit = () => {
+    if (searchText) {
       setHistory((prevHistory) => {
-        const newHistory = [text, ...prevHistory];
+        const newHistory = [searchText, ...prevHistory];
         return newHistory.slice(0, 3);
       });
+      setSearchText('');
     }
   };
 
@@ -37,7 +41,7 @@ export default function App() {
 
       {/*barra de pesquisa para gerar a viagem */}
       <View style={styles.searchBar}> 
-        <Ionicons name="search" size={24} color="black" style={styles.icon} /> {/* Icone */}
+        <Ionicons name="search" size={24} color="black" style={styles.icon} onPress={handleSearchSubmit} /> {/* Icone */}
         <TextInput
           style={styles.searchInput}
           placeholder="Para onde?"

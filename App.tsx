@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, TouchableOpacity, View, Dimensions, TextInput, ScrollView } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Dimensions, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Import icons
 
 const { width, height } = Dimensions.get('window');
@@ -9,9 +9,20 @@ export default function App() {
   const [selectedTab, setSelectedTab] = useState('Viagem');
   const [searchText, setSearchText] = useState('');
   const [requestTime, setRequestTime] = useState('Agora');
+  const [history, setHistory] = useState<string[]>([]);
+
+  const handleSearch = (text: string): void => {
+    setSearchText(text);
+    if (text) {
+      setHistory((prevHistory) => {
+        const newHistory = [text, ...prevHistory];
+        return newHistory.slice(0, 3);
+      });
+    }
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       {/*<---------------------Começo do Header ------------------------>*/}
       <StatusBar style="auto" />
       <View style={styles.header}>
@@ -31,7 +42,7 @@ export default function App() {
           style={styles.searchInput}
           placeholder="Para onde?"
           value={searchText}
-          onChangeText={setSearchText}
+          onChangeText={handleSearch}
         />
         <TouchableOpacity style={styles.nowButton} onPress={() => setRequestTime(requestTime === 'Agora' ? 'Mais tarde' : 'Agora')}>  
           <Text style={styles.nowButtonText}>{requestTime}</Text>
@@ -40,44 +51,31 @@ export default function App() {
       {/*<---------------------Fim do Header ------------------------>*/}
 
       {/*<---------------------Começo do Histórico ------------------------>*/}
-
-      <TouchableOpacity style={styles.locationContainer}>
-        <View style={styles.locationIcon} />
-        <View>
-          <Text style={styles.locationTitle}>Joy tubos</Text>
-          <Text style={styles.locationAddress}>Rua Antonio de Siqueira, 267, Itaquaquecetuba-SP</Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.locationContainer}>
-        <View style={styles.locationIcon} />
-        <View>
-          <Text style={styles.locationTitle}>Joy tubos</Text>
-          <Text style={styles.locationAddress}>Rua Antonio de Siqueira, 267, Itaquaquecetuba-SP</Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.locationContainer}>
-        <View style={styles.locationIcon} />
-        <View>
-          <Text style={styles.locationTitle}>Joy tubos</Text>
-          <Text style={styles.locationAddress}>Rua Antonio de Siqueira, 267, Itaquaquecetuba-SP</Text>
-        </View>
-      </TouchableOpacity>
+      <FlatList
+        data={history}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.locationContainer}> {/* Precisa de alguns reparos ainda, mas já temos um bom começo*/}
+            <View style={styles.locationIcon} />
+            <View>
+              <Text style={styles.locationTitle}>{item}</Text>
+              <Text style={styles.locationAddress}>Endereço fictício</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
       {/*<---------------------Fim do Histórico ------------------------>*/}
-
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: height * 0.05,
-    marginTop:-350
   },
   header: {
     flexDirection: 'row',
@@ -125,6 +123,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: height * 0.02,
+    justifyContent: 'space-between',
     width: '90%',
   },
   locationIcon: {

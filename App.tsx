@@ -10,6 +10,7 @@ export default function App() {
   const [searchText, setSearchText] = useState('');
   const [requestTime, setRequestTime] = useState('Agora');
   const [history, setHistory] = useState<string[]>([]);
+  const [activePage, setActivePage] = useState('Home'); // State for active page
 
   const handleSearch = (text: string): void => {
     setSearchText(text);
@@ -22,6 +23,21 @@ export default function App() {
         return newHistory.slice(0, 3);
       });
       setSearchText('');
+    }
+  };
+
+  const renderPage = () => {
+    switch (activePage) {
+      case 'Home':
+        return <Text>Home Page</Text>;
+      case 'Serviços':
+        return <Text>Serviços Page</Text>;
+      case 'Atividade':
+        return <Text>Atividade Page</Text>;
+      case 'Conta':
+        return <Text>Conta Page</Text>;
+      default:
+        return <Text>Home Page</Text>;
     }
   };
 
@@ -60,7 +76,7 @@ export default function App() {
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.locationContainer}> {/* Precisa de alguns reparos ainda, mas já temos um bom começo*/}
-            <View style={styles.locationIcon} />
+            <Ionicons name="time" size={40} color="black" style={styles.locationIcon} /> {/* Icone de relógio */}
             <View>
               <Text style={styles.locationTitle}>{item}</Text>
               <Text style={styles.locationAddress}>Endereço fictício</Text>
@@ -69,6 +85,33 @@ export default function App() {
         )}
       />
       {/*<---------------------Fim do Histórico ------------------------>*/}
+
+      {/*<---------------------Começo do Conteúdo da Página ------------------------>*/}
+      <View style={styles.pageContent}>
+        {renderPage()}
+      </View>
+      {/*<---------------------Fim do Conteúdo da Página ------------------------>*/}
+
+      {/*<---------------------Começo do Footer Navbar ------------------------>*/}
+      <View style={styles.footer}>
+        <TouchableOpacity onPress={() => setActivePage('Home')} style={styles.navButton}>
+          <Ionicons name="home" size={24} color={activePage === 'Home' ? 'blue' : 'black'} />
+          <Text style={activePage === 'Home' ? styles.activeNavText : styles.navText}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setActivePage('Serviços')} style={styles.navButton}>
+          <Ionicons name="construct" size={24} color={activePage === 'Serviços' ? 'blue' : 'black'} />
+          <Text style={activePage === 'Serviços' ? styles.activeNavText : styles.navText}>Serviços</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setActivePage('Atividade')} style={styles.navButton}>
+          <Ionicons name="list" size={24} color={activePage === 'Atividade' ? 'blue' : 'black'} />
+          <Text style={activePage === 'Atividade' ? styles.activeNavText : styles.navText}>Atividade</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setActivePage('Conta')} style={styles.navButton}>
+          <Ionicons name="person" size={24} color={activePage === 'Conta' ? 'blue' : 'black'} />
+          <Text style={activePage === 'Conta' ? styles.activeNavText : styles.navText}>Conta</Text>
+        </TouchableOpacity>
+      </View>
+      {/*<---------------------Fim do Footer Navbar ------------------------>*/}
     </View>
   );
 }
@@ -131,10 +174,6 @@ const styles = StyleSheet.create({
     width: '90%',
   },
   locationIcon: {
-    backgroundColor: 'red',
-    height: 40,
-    width: 40,
-    borderRadius: 20,
     marginRight: width * 0.05,
   },
   locationTitle: {
@@ -143,5 +182,32 @@ const styles = StyleSheet.create({
   },
   locationAddress: {
     fontSize: width * 0.035,
+  },
+  pageContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    height: height * 0.05,
+    borderTopWidth: 1,
+    borderTopColor: 'lightgray',
+    backgroundColor: '#fff',
+  },
+  navButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    top: 10,
+  },
+  navText: {
+    fontSize: width * 0.03,
+    color: 'black',
+  },
+  activeNavText: {
+    fontSize: width * 0.03,
+    color: 'blue',
   },
 });

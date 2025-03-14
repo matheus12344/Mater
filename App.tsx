@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, TouchableOpacity, View, Dimensions, TextInput, FlatList } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Dimensions, TextInput, FlatList, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Import icons
 
 const { width, height } = Dimensions.get('window');
@@ -29,7 +29,69 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'Home':
-        return <Text>Home Page</Text>;
+        return (
+          <ScrollView contentContainerStyle={styles.scrollViewContent}>
+            {/*<---------------------Começo do Header ------------------------>*/}
+            <StatusBar style="auto" />
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => setSelectedTab('Viagem')}>
+                <Text style={[styles.tabText, selectedTab === 'Viagem' && styles.selectedTab]}>Viagem</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setSelectedTab('Serviços')}>
+                <Text style={[styles.tabText, selectedTab === 'Serviços' && styles.selectedTab]}>Serviços</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/*barra de pesquisa para gerar a viagem */}
+            <View style={styles.searchBar}> 
+              <Ionicons name="search" size={24} color="black" style={styles.icon} onPress={handleSearchSubmit} /> {/* Icone */}
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Para onde?"
+                value={searchText}
+                onChangeText={handleSearch}
+              />
+              <TouchableOpacity style={styles.nowButton} onPress={() => setRequestTime(requestTime === 'Agora' ? 'Mais tarde' : 'Agora')}>  
+                <Text style={styles.nowButtonText}>{requestTime}</Text>
+              </TouchableOpacity>
+            </View>
+            {/*<---------------------Fim do Header ------------------------>*/}
+
+            {/*<---------------------Começo do Histórico ------------------------>*/}
+            <FlatList
+              data={history}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.locationContainer}> {/* Precisa de alguns reparos ainda, mas já temos um bom começo*/}
+                  <Ionicons name="time" size={40} color="black" style={styles.locationIcon} /> {/* Icone de relógio */}
+                  <View>
+                    <Text style={styles.locationTitle}>{item}</Text>
+                    <Text style={styles.locationAddress}>Endereço fictício</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+            {/*<---------------------Fim do Histórico ------------------------>*/}
+            <Text style={styles.suggestionsTitle}>Sugestões</Text>
+            <FlatList
+              data={[
+                { id: '1', src: 'https://example.com/tow-truck1.jpg' },
+                { id: '2', src: 'https://example.com/tow-truck2.jpg' },
+                { id: '3', src: 'https://example.com/tow-truck3.jpg' },
+                { id: '4', src: 'https://example.com/tow-truck4.jpg' },
+              ]}
+              horizontal
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.suggestionContainer}>
+                  <Image source={{ uri: item.src }} style={styles.suggestionImage} />
+                </TouchableOpacity>
+              )}
+              showsHorizontalScrollIndicator={true}
+            />
+          </ScrollView>
+        );
       case 'Serviços':
         return <Text>Serviços Page</Text>;
       case 'Atividade':
@@ -43,49 +105,6 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      {/*<---------------------Começo do Header ------------------------>*/}
-      <StatusBar style="auto" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => setSelectedTab('Viagem')}>
-          <Text style={[styles.tabText, selectedTab === 'Viagem' && styles.selectedTab]}>Viagem</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => setSelectedTab('Serviços')}>
-          <Text style={[styles.tabText, selectedTab === 'Serviços' && styles.selectedTab]}>Serviços</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/*barra de pesquisa para gerar a viagem */}
-      <View style={styles.searchBar}> 
-        <Ionicons name="search" size={24} color="black" style={styles.icon} onPress={handleSearchSubmit} /> {/* Icone */}
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Para onde?"
-          value={searchText}
-          onChangeText={handleSearch}
-        />
-        <TouchableOpacity style={styles.nowButton} onPress={() => setRequestTime(requestTime === 'Agora' ? 'Mais tarde' : 'Agora')}>  
-          <Text style={styles.nowButtonText}>{requestTime}</Text>
-        </TouchableOpacity>
-      </View>
-      {/*<---------------------Fim do Header ------------------------>*/}
-
-      {/*<---------------------Começo do Histórico ------------------------>*/}
-      <FlatList
-        data={history}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.locationContainer}> {/* Precisa de alguns reparos ainda, mas já temos um bom começo*/}
-            <Ionicons name="time" size={40} color="black" style={styles.locationIcon} /> {/* Icone de relógio */}
-            <View>
-              <Text style={styles.locationTitle}>{item}</Text>
-              <Text style={styles.locationAddress}>Endereço fictício</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-      {/*<---------------------Fim do Histórico ------------------------>*/}
-
       {/*<---------------------Começo do Conteúdo da Página ------------------------>*/}
       <View style={styles.pageContent}>
         {renderPage()}
@@ -120,8 +139,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollViewContent: {
     alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: height * 0.05,
   },
   header: {
@@ -185,14 +205,12 @@ const styles = StyleSheet.create({
   },
   pageContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    height: height * 0.05,
+    height: height * 0.08,
     borderTopWidth: 1,
     borderTopColor: 'lightgray',
     backgroundColor: '#fff',
@@ -200,7 +218,6 @@ const styles = StyleSheet.create({
   navButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    top: 10,
   },
   navText: {
     fontSize: width * 0.03,
@@ -209,5 +226,25 @@ const styles = StyleSheet.create({
   activeNavText: {
     fontSize: width * 0.03,
     color: 'blue',
+  },
+  suggestionsTitle: {
+    fontSize: width * 0.05,
+    fontWeight: 'bold',
+    marginBottom: height * 0.02,
+    right: width * 0.35,
+  },
+  suggestionContainer: {
+    width: width * 0.4,
+    height: height * 0.2,
+    backgroundColor: 'powderblue',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 30,
+    margin: 10,
+  },
+  suggestionImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
   },
 });

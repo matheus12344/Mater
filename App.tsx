@@ -1,54 +1,160 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, TouchableOpacity, View, Dimensions, TextInput, FlatList, ScrollView, Image, Appearance } from 'react-native'; // Import Appearance for theme detection
-import { Ionicons } from '@expo/vector-icons'; // Import icons
-import * as FileSystem from 'expo-file-system'; // Import FileSystem for file operations
+import { 
+  StyleSheet, 
+  Text, 
+  TouchableOpacity, 
+  View, 
+  Dimensions, 
+  TextInput, 
+  FlatList, 
+  Image, 
+  Appearance,
+  Platform 
+} from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
 
+// Tipos e interfaces
+type TabType = 'Viagem' | 'Serviços';
+type PageType = 'Home' | 'Serviços' | 'Atividade' | 'Conta';
+
+interface SuggestionItem {
+  id: string;
+  src: string;
+  title: string;
+}
+
+interface NavigationButtonProps {
+  page: PageType;
+  label: string;
+  icon: string;
+  activePage: PageType;
+  theme: 'light' | 'dark';
+  onPress: () => void;
+}
+
+// Configurações de tema
+const colorSchemes = {
+  light: {
+    background: '#F9F9F9',
+    primary: '#2A2AC9',
+    text: '#1A1A1A',
+    card: '#FFFFFF',
+    border: '#E0E0E0',
+    placeholder: '#A0A0A0',
+  },
+  dark: {
+    background: '#121212',
+    primary: '#5757F7',
+    text: '#FFFFFF',
+    card: '#1E1E1E',
+    border: '#303030',
+    placeholder: '#808080',
+  },
+};
+
+// Configurações responsivas
 const { width, height } = Dimensions.get('window');
+const guidelineBaseWidth = 375;
+const scale = (size: number) => (width / guidelineBaseWidth) * size;
 const historyFilePath = `${FileSystem.documentDirectory}history.txt`;
 
-export default function App() {
-  const [selectedTab, setSelectedTab] = useState('Viagem');
-  const [searchText, setSearchText] = useState('');
-  const [requestTime, setRequestTime] = useState('Agora');
-  const [history, setHistory] = useState<string[]>([]);
-  const [activePage, setActivePage] = useState('Home'); // State for active page
-  const [theme, setTheme] = useState(Appearance.getColorScheme()); // State for theme
+// Hook personalizado para tema
+const useTheme = () => {
+  const [theme, setTheme] = useState(Appearance.getColorScheme() as 'light' | 'dark');
 
   useEffect(() => {
-    loadHistory();
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-      setTheme(colorScheme);
+      setTheme(colorScheme as 'light' | 'dark');
     });
     return () => subscription.remove();
   }, []);
 
-  const loadHistory = async () => {
-    try {
-      const fileExists = await FileSystem.getInfoAsync(historyFilePath);
-      if (fileExists.exists) {
-        const fileContents = await FileSystem.readAsStringAsync(historyFilePath);
-        setHistory(fileContents.split('\n').filter(Boolean));
+  return {
+    theme,
+    colors: colorSchemes[theme],
+    styles: createStyles(theme),
+  };
+};
+
+// Componente NavigationButton
+const NavigationButton: React.FC<NavigationButtonProps> = ({ 
+  page, 
+  label, 
+  icon, 
+  activePage, 
+  theme, 
+  onPress 
+}) => {
+  const { colors, styles } = useTheme();
+  const isActive = activePage === page;
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.navButton}
+      accessibilityRole="button"
+      accessibilityLabel={`Navegar para ${label}`}
+    >
+      <MaterialCommunityIcons 
+        name={icon as any} 
+        size={scale(24)} 
+        color={isActive ? colors.primary : colors.text} 
+      />
+      <Text style={[
+        styles.navText,
+        { color: isActive ? colors.primary : colors.text },
+        isActive && styles.activeNavText
+      ]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+// Componente principal
+export default function App() {
+  const { theme, colors, styles } = useTheme();
+  const [selectedTab, setSelectedTab] = useState<TabType>('Viagem');
+  const [searchText, setSearchText] = useState('');
+  const [history, setHistory] = useState<string[]>([]);
+  const [activePage, setActivePage] = useState<PageType>('Home');
+
+  const suggestions: SuggestionItem[] = [
+    { id: '1', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido' },
+    { id: '2', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h' },
+    { id: '3', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada' },
+    { id: '4', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica' },
+  ];
+
+  // Carregar histórico
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const fileExists = await FileSystem.getInfoAsync(historyFilePath);
+        if (fileExists.exists) {
+          const contents = await FileSystem.readAsStringAsync(historyFilePath);
+          setHistory(contents.split('\n').filter(Boolean));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
       }
-    } catch (error) {
-      console.error('Error loading history:', error);
-    }
-  };
+    };
+    loadHistory();
+  }, []);
 
-  const saveHistory = async (newHistory: string[]) => {
+  // Salvar histórico
+  const saveHistory = async (items: string[]) => {
     try {
-      await FileSystem.writeAsStringAsync(historyFilePath, newHistory.join('\n'));
+      await FileSystem.writeAsStringAsync(historyFilePath, items.join('\n'));
     } catch (error) {
-      console.error('Error saving history:', error);
+      console.error('Erro ao salvar histórico:', error);
     }
   };
 
-  const handleSearch = (text: string): void => {
-    setSearchText(text);
-  };
-
-  const handleSearchSubmit = async () => {
-    if (searchText) {
+  const handleSearch = async () => {
+    if (searchText.trim()) {
       const newHistory = [searchText, ...history].slice(0, 3);
       setHistory(newHistory);
       await saveHistory(newHistory);
@@ -56,249 +162,275 @@ export default function App() {
     }
   };
 
-  const renderPage = () => {
-    switch (activePage) {
-      case 'Home':
-        return (
-          <ScrollView contentContainerStyle={styles.scrollViewContent}>
-            {/*<---------------------Começo do Header ------------------------>*/}
-            <StatusBar style="auto" />
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => setSelectedTab('Viagem')}>
-                <Text style={[styles.tabText, selectedTab === 'Viagem' && styles.selectedTab, theme === 'dark' ? styles.textDark : styles.textLight]}>Viagem</Text>
-              </TouchableOpacity>
+  const renderItem = ({ item }: { item: string }) => (
+    <TouchableOpacity style={[styles.locationContainer, { backgroundColor: colors.card }]}>
+      <Ionicons name="time" size={scale(24)} color={colors.text} />
+      <View style={styles.locationTextContainer}>
+        <Text style={[styles.locationTitle, { color: colors.text }]}>{item}</Text>
+        <Text style={[styles.locationAddress, { color: colors.placeholder }]}>
+          Endereço fictício
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
-              <TouchableOpacity onPress={() => setSelectedTab('Serviços')}>
-                <Text style={[styles.tabText, selectedTab === 'Serviços' && styles.selectedTab, theme === 'dark' ? styles.textDark : styles.textLight]}>Serviços</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/*barra de pesquisa para gerar a viagem */}
-            <View style={styles.searchBar}> 
-              <Ionicons name="search" size={24} color={theme === 'dark' ? 'white' : 'black'} style={styles.icon} onPress={handleSearchSubmit} /> {/* Icone */}
-              <TextInput
-                style={[styles.searchInput, theme === 'dark' ? styles.textDark : styles.textLight]}
-                placeholder="Para onde?"
-                placeholderTextColor={theme === 'dark' ? '#ccc' : '#888'}
-                value={searchText}
-                onChangeText={handleSearch}
-              />
-              <TouchableOpacity style={styles.nowButton} onPress={() => setRequestTime(requestTime === 'Agora' ? 'Mais tarde' : 'Agora')}>  
-                <Text style={styles.nowButtonText}>{requestTime}</Text>
-              </TouchableOpacity>
-            </View>
-            {/*<---------------------Fim do Header ------------------------>*/}
-
-            {/*<---------------------Começo do Histórico ------------------------>*/}
-            <FlatList
-              data={history}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.locationContainer}> {/* Precisa de alguns reparos ainda, mas já temos um bom começo*/}
-                  <Ionicons name="time" size={40} color={theme === 'dark' ? 'white' : 'black'} style={styles.locationIcon} /> {/* Icone de relógio */}
-                  <View>
-                    <Text style={[styles.locationTitle, theme === 'dark' ? styles.textDark : styles.textLight]}>{item}</Text>
-                    <Text style={[styles.locationAddress, theme === 'dark' ? styles.textDark : styles.textLight]}>Endereço fictício</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
-            {/*<---------------------Fim do Histórico ------------------------>*/}
-            <Text style={[styles.suggestionsTitle, theme === 'dark' ? styles.textDark : styles.textLight]}>Sugestões</Text>
-            <FlatList
-              data={[
-                { id: '1', src: 'https://example.com/tow-truck1.jpg' },
-                { id: '2', src: 'https://example.com/tow-truck2.jpg' },
-                { id: '3', src: 'https://example.com/tow-truck3.jpg' },
-                { id: '4', src: 'https://example.com/tow-truck4.jpg' },
-              ]}
-              horizontal
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.suggestionContainer}>
-                  <Image source={{ uri: item.src }} style={styles.suggestionImage} />
-                </TouchableOpacity>
-              )}
-              showsHorizontalScrollIndicator={true}
-            />
-          </ScrollView>
-        );
-      case 'Serviços':
-        return <Text style={theme === 'dark' ? styles.textDark : styles.textLight}>Serviços Page</Text>;
-      case 'Atividade':
-        return <Text style={theme === 'dark' ? styles.textDark : styles.textLight}>Atividade Page</Text>;
-      case 'Conta':
-        return <Text style={theme === 'dark' ? styles.textDark : styles.textLight}>Conta Page</Text>;
-      default:
-        return <Text style={theme === 'dark' ? styles.textDark : styles.textLight}>Home Page</Text>;
-    }
-  };
+  const renderSuggestion = ({ item }: { item: SuggestionItem }) => (
+    <TouchableOpacity style={styles.suggestionContainer}>
+      <Image source={{ uri: item.src }} style={styles.suggestionImage} />
+      <View style={styles.imageOverlay} />
+      <Text style={styles.suggestionTitle}>{item.title}</Text>
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={theme === 'dark' ? styles.containerDark : styles.container}>
-      {/*<---------------------Começo do Conteúdo da Página ------------------------>*/}
-      <View style={styles.pageContent}>
-        {renderPage()}
-      </View>
-      {/*<---------------------Fim do Conteúdo da Página ------------------------>*/}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
 
-      {/*<---------------------Começo do Footer Navbar ------------------------>*/}
-      <View style={theme === 'dark' ? styles.footerDark : styles.footer}>
-        <TouchableOpacity onPress={() => setActivePage('Home')} style={styles.navButton}>
-          <Ionicons name="home" size={24} color={activePage === 'Home' ? 'blue' : theme === 'dark' ? 'white' : 'black'} />
-          <Text style={activePage === 'Home' ? styles.activeNavText : theme === 'dark' ? styles.navTextDark : styles.navText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActivePage('Serviços')} style={styles.navButton}>
-          <Ionicons name="construct" size={24} color={activePage === 'Serviços' ? 'blue' : theme === 'dark' ? 'white' : 'black'} />
-          <Text style={activePage === 'Serviços' ? styles.activeNavText : theme === 'dark' ? styles.navTextDark : styles.navText}>Serviços</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActivePage('Atividade')} style={styles.navButton}>
-          <Ionicons name="list" size={24} color={activePage === 'Atividade' ? 'blue' : theme === 'dark' ? 'white' : 'black'} />
-          <Text style={activePage === 'Atividade' ? styles.activeNavText : theme === 'dark' ? styles.navTextDark : styles.navText}>Atividade</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActivePage('Conta')} style={styles.navButton}>
-          <Ionicons name="person" size={24} color={activePage === 'Conta' ? 'blue' : theme === 'dark' ? 'white' : 'black'} />
-          <Text style={activePage === 'Conta' ? styles.activeNavText : theme === 'dark' ? styles.navTextDark : styles.navText}>Conta</Text>
-        </TouchableOpacity>
+      {activePage === 'Home' ? (
+        <FlatList
+          data={[]}
+          renderItem={() => null}
+          ListHeaderComponent={
+            <>
+              <View style={styles.header}>
+                {['Viagem', 'Serviços'].map((tab) => (
+                  <TouchableOpacity
+                    key={tab}
+                    onPress={() => setSelectedTab(tab as TabType)}
+                    style={[
+                      styles.tabButton,
+                      selectedTab === tab && styles.activeTab,
+                    ]}
+                  >
+                    <Text style={[
+                      styles.tabText,
+                      { color: colors.text },
+                      selectedTab === tab && styles.activeTabText
+                    ]}>
+                      {tab}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+                <TextInput
+                  style={[styles.searchInput, { color: colors.text }]}
+                  placeholder="Para onde?"
+                  placeholderTextColor={colors.placeholder}
+                  value={searchText}
+                  onChangeText={setSearchText}
+                  onSubmitEditing={handleSearch}
+                />
+                <TouchableOpacity 
+                  style={[styles.searchButton, { backgroundColor: colors.primary }]}
+                  onPress={handleSearch}
+                >
+                  <Ionicons name="search" size={scale(20)} color="white" />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Histórico
+              </Text>
+              <FlatList
+                data={history}
+                renderItem={renderItem}
+                keyExtractor={(item, index) => index.toString()}
+                scrollEnabled={false}
+              />
+            </>
+          }
+          ListFooterComponent={
+            <>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Sugestões
+              </Text>
+              <FlatList
+                horizontal
+                data={suggestions}
+                renderItem={renderSuggestion}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.suggestionsList}
+              />
+            </>
+          }
+          contentContainerStyle={styles.contentContainer}
+        />
+      ) : (
+        <View style={styles.otherPages}>
+          <Text style={{ color: colors.text }}>{activePage} Page</Text>
+        </View>
+      )}
+
+      <View style={[styles.footer, { borderTopColor: colors.border }]}>
+        <NavigationButton
+          page="Home"
+          label="Home"
+          icon="home"
+          activePage={activePage}
+          theme={theme}
+          onPress={() => setActivePage('Home')}
+        />
+        <NavigationButton
+          page="Serviços"
+          label="Serviços"
+          icon="tools"
+          activePage={activePage}
+          theme={theme}
+          onPress={() => setActivePage('Serviços')}
+        />
+        <NavigationButton
+          page="Atividade"
+          label="Atividade"
+          icon="clipboard-list"
+          activePage={activePage}
+          theme={theme}
+          onPress={() => setActivePage('Atividade')}
+        />
+        <NavigationButton
+          page="Conta"
+          label="Conta"
+          icon="account"
+          activePage={activePage}
+          theme={theme}
+          onPress={() => setActivePage('Conta')}
+        />
       </View>
-      {/*<---------------------Fim do Footer Navbar ------------------------>*/}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+// Função para criar estilos dinâmicos
+const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
-  containerDark: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  scrollViewContent: {
-    alignItems: 'center',
-    paddingVertical: height * 0.05,
+  contentContainer: {
+    paddingBottom: scale(20),
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%',
-    marginBottom: height * 0.05,
+    justifyContent: 'center',
+    marginVertical: scale(20),
+  },
+  tabButton: {
+    paddingHorizontal: scale(25),
+    paddingVertical: scale(10),
+    borderRadius: scale(20),
+    marginHorizontal: scale(10),
+  },
+  activeTab: {
+    backgroundColor: colorSchemes[theme].primary + '20',
   },
   tabText: {
-    fontSize: width * 0.08,
+    fontSize: scale(16),
+    fontWeight: '500',
   },
-  selectedTab: {
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
+  activeTabText: {
+    color: colorSchemes[theme].primary,
+    fontWeight: '600',
   },
-  searchBar: {
+  searchContainer: {
     flexDirection: 'row',
-    width: '90%',
-    height: height * 0.07,
-    backgroundColor: 'lightgray',
     alignItems: 'center',
-    borderRadius: 20,
-    paddingHorizontal: width * 0.05,
-    marginBottom: height * 0.05,
-  },
-  icon: {
-    marginRight: width * 0.02,
+    marginHorizontal: scale(20),
+    borderRadius: scale(15),
+    padding: scale(15),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchInput: {
     flex: 1,
-    fontSize: width * 0.04,
+    fontSize: scale(16),
+    paddingVertical: 0,
   },
-  nowButton: {
-    backgroundColor: 'blue',
-    padding: width * 0.02,
-    borderRadius: 10,
-    height: height * 0.05,
-    alignItems: 'center',
-    justifyContent: 'center',
+  searchButton: {
+    padding: scale(10),
+    borderRadius: scale(12),
+    marginLeft: scale(10),
   },
-  nowButtonText: {
-    color: '#fff',
-    fontSize: width * 0.03,
+  sectionTitle: {
+    fontSize: scale(18),
+    fontWeight: '600',
+    marginHorizontal: scale(20),
+    marginVertical: scale(15),
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: height * 0.02,
-    justifyContent: 'space-between',
-    width: '90%',
+    padding: scale(15),
+    marginHorizontal: scale(20),
+    marginVertical: scale(8),
+    borderRadius: scale(12),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  locationIcon: {
-    marginRight: width * 0.05,
+  locationTextContainer: {
+    marginLeft: scale(15),
   },
   locationTitle: {
-    fontSize: width * 0.04,
-    fontWeight: 'bold',
+    fontSize: scale(16),
+    fontWeight: '500',
   },
   locationAddress: {
-    fontSize: width * 0.035,
+    fontSize: scale(14),
+    marginTop: scale(4),
   },
-  pageContent: {
-    flex: 1,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    height: height * 0.08,
-    borderTopWidth: 1,
-    borderTopColor: 'lightgray',
-    backgroundColor: '#fff',
-  },
-  footerDark: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    height: height * 0.08,
-    borderTopWidth: 1,
-    borderTopColor: 'lightgray',
-    backgroundColor: '#000',
-  },
-  navButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navText: {
-    fontSize: width * 0.03,
-    color: 'black',
-  },
-  navTextDark: {
-    fontSize: width * 0.03,
-    color: 'white',
-  },
-  activeNavText: {
-    fontSize: width * 0.03,
-    color: 'blue',
-  },
-  suggestionsTitle: {
-    fontSize: width * 0.05,
-    fontWeight: 'bold',
-    marginBottom: height * 0.02,
-    right: width * 0.35,
+  suggestionsList: {
+    paddingHorizontal: scale(20),
   },
   suggestionContainer: {
-    width: width * 0.4,
-    height: height * 0.2,
-    backgroundColor: 'powderblue',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 30,
-    margin: 10,
+    width: scale(240),
+    height: scale(160),
+    borderRadius: scale(20),
+    marginRight: scale(15),
+    overflow: 'hidden',
   },
   suggestionImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 30,
+    resizeMode: 'cover',
   },
-  textLight: {
-    color: '#000',
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  textDark: {
-    color: '#fff',
+  suggestionTitle: {
+    position: 'absolute',
+    bottom: scale(15),
+    left: scale(15),
+    color: 'white',
+    fontSize: scale(16),
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: scale(10),
+    borderTopWidth: 1,
+  },
+  navButton: {
+    alignItems: 'center',
+    padding: scale(8),
+  },
+  navText: {
+    fontSize: scale(12),
+    marginTop: scale(4),
+  },
+  activeNavText: {
+    fontWeight: '600',
+  },
+  otherPages: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

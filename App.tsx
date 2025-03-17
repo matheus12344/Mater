@@ -10,7 +10,8 @@ import {
   FlatList, 
   Image, 
   Appearance,
-  Platform 
+  Platform, 
+  ScrollView
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
@@ -32,6 +33,31 @@ interface SuggestionItem {
   src: string;
   title: string;
 }
+
+interface ActivityItem {
+  id: string;
+  date: Date;
+  title: string;
+  description: string;
+  status: 'completed' | 'pending' | 'cancelled';
+  price?: number;
+  icon: string;
+}
+
+interface UserData {
+  name: string;
+  email: string;
+  profileImage: string;
+  vehicles: Vehicle[];
+}
+
+interface Vehicle {
+  id: string;
+  model: string;
+  plate: string;
+  color: string;
+}
+
 
 interface NavigationButtonProps {
   page: PageType;
@@ -173,6 +199,159 @@ export default function App() {
       color: '#D63031',
     },
   ];
+
+  const activities: ActivityItem[] = [
+    {
+      id: '1',
+      date: new Date(2024, 2, 15),
+      title: 'Guincho Particular',
+      description: 'Remoção do local - Av. Paulista, 1000',
+      status: 'completed',
+      price: 250.0,
+      icon: 'car-sport',
+    },
+    {
+      id: '2',
+      date: new Date(2024, 2, 16),
+      title: 'Troca de Bateria',
+      description: 'Honda Civic 2020 - Bateria 60Ah',
+      status: 'pending',
+      icon: 'battery-charging',
+    },
+    {
+      id: '3',
+      date: new Date(2024, 2, 17),
+      title: 'SOS Combustível',
+      description: 'Entrega de 5L de gasolina',
+      status: 'cancelled',
+      icon: 'water',
+    },
+  ];
+
+  const [userData] = useState<UserData>({
+    name: 'Maria Silva',
+    email: 'maria.silva@example.com',
+    profileImage: 'https://example.com/profile.jpg',
+    vehicles: [
+      {
+        id: '1',
+        model: 'Honda Civic 2020',
+        plate: 'ABC1D23',
+        color: '#FF6B6B',
+      },
+      {
+        id: '2',
+        model: 'Fiat Toro 2022',
+        plate: 'XYZ4E56',
+        color: '#4ECDC4',
+      },
+    ],
+  });
+
+  const accountOptions = [
+    { id: '1', icon: 'settings', title: 'Configurações', screen: 'Settings' },
+    { id: '2', icon: 'shield-checkmark', title: 'Privacidade', screen: 'Privacy' },
+    { id: '3', icon: 'card', title: 'Pagamentos', screen: 'Payments' },
+    { id: '4', icon: 'help-circle', title: 'Ajuda', screen: 'Help' },
+    { id: '5', icon: 'log-out', title: 'Sair', screen: 'Logout' },
+  ];
+
+  const renderVehicleItem = ({item}: {item: Vehicle}) => (
+    <View style={[styles.vehicleCard, {backgroundColor: colors.card}]}>
+      <View style={[styles.vehicleColor, {backgroundColor: item.color}]} />
+      <View style={styles.vehicleInfo}>
+        <Text style={[styles.vehicleModel, {color: colors.text}]}>{item.model}</Text>
+        <Text style={[styles.vehiclePlate, {color: colors.placeholder}]}>{item.plate}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={scale(20)} color={colors.placeholder} />
+    </View>
+  );
+
+  const renderAccountOption = ({item}: {item: typeof accountOptions[0]}) => (
+    <TouchableOpacity 
+      style={styles.optionItem}
+      onPress={() => handleOptionSelect(item.screen)}
+    >
+      <Ionicons name={item.icon} size={scale(20)} color={colors.text} />
+      <Text style={[styles.optionText, {color: colors.text}]}>{item.title}</Text>
+      <Ionicons name="chevron-forward" size={scale(20)} color={colors.placeholder} />
+    </TouchableOpacity>
+  );
+
+  const handleOptionSelect = (screen: string) => {
+    // Lógica de navegação
+    console.log('Navegar para:', screen);
+  };
+
+  const renderActivityItem = ({item}: {item: ActivityItem}) => (
+    <TouchableOpacity 
+      style={[styles.activityCard, {backgroundColor: colors.card}]}
+      onPress={() => handleActivityPress(item)}
+    >
+      <View style={styles.activityHeader}>
+        <Ionicons 
+          name={item.icon} 
+          size={scale(20)} 
+          color={colors.text} 
+          style={styles.activityIcon}
+        />
+        <Text style={[styles.activityDate, {color: colors.placeholder}]}>
+          {formatDate(item.date)}
+        </Text>
+        <View style={[styles.statusBadge, {backgroundColor: getStatusColor(item.status).bg}]}>
+          <Text style={[styles.statusText, {color: getStatusColor(item.status).text}]}>
+            {translateStatus(item.status)}
+          </Text>
+        </View>
+      </View>
+      
+      <Text style={[styles.activityTitle, {color: colors.text}]}>{item.title}</Text>
+      <Text style={[styles.activityDescription, {color: colors.placeholder}]}>
+        {item.description}
+      </Text>
+      
+      {item.price && (
+        <View style={styles.priceContainer}>
+          <Text style={[styles.priceLabel, {color: colors.text}]}>Valor:</Text>
+          <Text style={[styles.priceValue, {color: colors.primary}]}>
+            R$ {item.price.toFixed(2)}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+
+  // Funções auxiliares
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).replace(/\./g, '');
+  };
+
+  const translateStatus = (status: string) => {
+    const translations = {
+      completed: 'Concluído',
+      pending: 'Pendente',
+      cancelled: 'Cancelado',
+    };
+    return translations[status] || status;
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      completed: {bg: '#E3FCEF', text: '#006644'},
+      pending: {bg: '#FFF6E6', text: '#FF8B00'},
+      cancelled: {bg: '#FFEBE6', text: '#BF2600'},
+    };
+    return colors[status] || {bg: '#EAECF0', text: '#344054'};
+  };
+
+  const handleActivityPress = (activity: ActivityItem) => {
+    // Navegar para detalhes da atividade
+    console.log('Atividade selecionada:', activity);
+  };
 
   const renderServiceItem = ({item}: {item: ServiceItem}) => (
     <TouchableOpacity 
@@ -346,6 +525,63 @@ export default function App() {
           showsVerticalScrollIndicator={false}
         />
       </View>
+      ) : activePage === 'Atividade' ?(
+        <FlatList
+            data={activities}
+            renderItem={renderActivityItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.activityContainer}
+            ListHeaderComponent={
+              <Text style={[styles.sectionTitle, {color: colors.text}]}>
+                Histórico de Atividades
+              </Text>
+            }
+          />
+      ) : activePage === 'Conta' ?(
+        <ScrollView contentContainerStyle={styles.accountContainer}>
+            {/* Header do Perfil */}
+            <View style={styles.profileHeader}>
+              <Image
+                source={{uri: userData.profileImage}}
+                style={styles.profileImage}
+              />
+              <View style={styles.profileInfo}>
+                <Text style={[styles.profileName, {color: colors.text}]}>
+                  {userData.name}
+                </Text>
+                <Text style={[styles.profileEmail, {color: colors.placeholder}]}>
+                  {userData.email}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.editButton}>
+                <Ionicons name="pencil" size={scale(18)} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Seção de Veículos */}
+            <Text style={[styles.sectionTitle, {color: colors.text}]}>
+              Meus Veículos
+            </Text>
+            <FlatList
+              data={userData.vehicles}
+              renderItem={renderVehicleItem}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+              contentContainerStyle={styles.vehicleList}
+            />
+
+            {/* Opções da Conta */}
+            <Text style={[styles.sectionTitle, {color: colors.text}]}>
+              Configurações
+            </Text>
+            <FlatList
+              data={accountOptions}
+              renderItem={renderAccountOption}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+              contentContainerStyle={styles.optionsList}
+            />
+          </ScrollView>
       ) : (
         <View style={styles.otherPages}>
           <Text style={{ color: colors.text }}>{activePage} Page</Text>
@@ -555,5 +791,134 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   },
   servicesList: {
     paddingBottom: scale(20),
+  },
+  activityContainer: {
+    padding: scale(20),
+  },
+  activityCard: {
+    padding: scale(16),
+    borderRadius: scale(12),
+    marginBottom: scale(12),
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: scale(8),
+  },
+  activityIcon: {
+    marginRight: scale(8),
+  },
+  activityDate: {
+    fontSize: scale(12),
+    flex: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(4),
+    borderRadius: scale(20),
+  },
+  statusText: {
+    fontSize: scale(12),
+    fontWeight: '500',
+  },
+  activityTitle: {
+    fontSize: scale(16),
+    fontWeight: '600',
+    marginBottom: scale(4),
+  },
+  activityDescription: {
+    fontSize: scale(14),
+    lineHeight: scale(20),
+    marginBottom: scale(8),
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: scale(8),
+  },
+  priceLabel: {
+    fontSize: scale(14),
+    marginRight: scale(8),
+  },
+  priceValue: {
+    fontSize: scale(16),
+    fontWeight: '600',
+  },
+  accountContainer: {
+    padding: scale(20),
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: scale(25),
+  },
+  profileImage: {
+    width: scale(60),
+    height: scale(60),
+    borderRadius: scale(30),
+    marginRight: scale(15),
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: scale(18),
+    fontWeight: '600',
+    marginBottom: scale(4),
+  },
+  profileEmail: {
+    fontSize: scale(14),
+  },
+  editButton: {
+    padding: scale(8),
+  },
+  vehicleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: scale(15),
+    borderRadius: scale(12),
+    marginBottom: scale(10),
+  },
+  vehicleColor: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(8),
+    marginRight: scale(15),
+  },
+  vehicleInfo: {
+    flex: 1,
+  },
+  vehicleModel: {
+    fontSize: scale(16),
+    fontWeight: '500',
+    marginBottom: scale(4),
+  },
+  vehiclePlate: {
+    fontSize: scale(14),
+    opacity: 0.8,
+  },
+  vehicleList: {
+    marginBottom: scale(25),
+  },
+  optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: scale(15),
+    paddingHorizontal: scale(10),
+    borderRadius: scale(12),
+    marginBottom: scale(8),
+  },
+  optionText: {
+    flex: 1,
+    fontSize: scale(16),
+    marginLeft: scale(15),
+  },
+  optionsList: {
+    marginBottom: scale(30),
   },
 });

@@ -19,6 +19,14 @@ import * as FileSystem from 'expo-file-system';
 type TabType = 'Viagem' | 'Serviços';
 type PageType = 'Home' | 'Serviços' | 'Atividade' | 'Conta';
 
+interface ServiceItem {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  color: string;
+}
+
 interface SuggestionItem {
   id: string;
   src: string;
@@ -120,6 +128,71 @@ export default function App() {
   const [searchText, setSearchText] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [activePage, setActivePage] = useState<PageType>('Home');
+
+  const services: ServiceItem[] = [
+    {
+      id: '1',
+      icon: 'car-sport',
+      title: 'Guincho 24h',
+      description: 'Serviço de reboque emergencial para qualquer tipo de veículo',
+      color: '#FF6B6B',
+    },
+    {
+      id: '2',
+      icon: 'battery-charging',
+      title: 'Bateria',
+      description: 'Recarga ou substituição de bateria veicular',
+      color: '#4ECDC4',
+    },
+    {
+      id: '3',
+      icon: 'alert-circle',
+      title: 'SOS Estrada',
+      description: 'Assistência rápida para emergências em rodovias',
+      color: '#FF9F43',
+    },
+    {
+      id: '4',
+      icon: 'key',
+      title: 'Chaveiro',
+      description: 'Abertura de veículos com chaves trancadas',
+      color: '#6C5CE7',
+    },
+    {
+      id: '5',
+      icon: 'water',
+      title: 'Combustível',
+      description: 'Entrega emergencial de combustível no local',
+      color: '#00B894',
+    },
+    {
+      id: '6',
+      icon: 'construct',
+      title: 'Reparos Leves',
+      description: 'Reparos emergenciais para seguir viagem',
+      color: '#D63031',
+    },
+  ];
+
+  const renderServiceItem = ({item}: {item: ServiceItem}) => (
+    <TouchableOpacity 
+      style={[styles.serviceCard, {backgroundColor: colors.card}]}
+      onPress={() => handleServiceSelect(item)}
+    >
+      <View style={[styles.serviceIconContainer, {backgroundColor: item.color + '20'}]}>
+        <Ionicons name={item.icon} size={scale(28)} color={item.color} />
+      </View>
+      <Text style={[styles.serviceTitle, {color: colors.text}]}>{item.title}</Text>
+      <Text style={[styles.serviceDescription, {color: colors.placeholder}]}>
+        {item.description}
+      </Text>
+    </TouchableOpacity>
+  );
+  
+  const handleServiceSelect = (service: ServiceItem) => {
+    // Lógica para seleção de serviço
+    console.log('Serviço selecionado:', service.title);
+  };
 
   const suggestions: SuggestionItem[] = [
     { id: '1', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido' },
@@ -258,6 +331,21 @@ export default function App() {
           }
           contentContainerStyle={styles.contentContainer}
         />
+      ) : activePage === 'Serviços' ?(
+        <View style={styles.servicesContainer}>
+        <Text style={[styles.sectionTitle, {color: colors.text}]}>
+          Serviços Disponíveis
+        </Text>
+        
+        <FlatList
+          data={services}
+          renderItem={renderServiceItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.servicesList}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
       ) : (
         <View style={styles.otherPages}>
           <Text style={{ color: colors.text }}>{activePage} Page</Text>
@@ -432,5 +520,40 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  servicesContainer: {
+    flex: 1,
+    padding: scale(20),
+  },
+  serviceCard: {
+    flex: 1,
+    margin: scale(8),
+    padding: scale(15),
+    borderRadius: scale(15),
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  serviceIconContainer: {
+    width: scale(50),
+    height: scale(50),
+    borderRadius: scale(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: scale(10),
+  },
+  serviceTitle: {
+    fontSize: scale(16),
+    fontWeight: '600',
+    marginBottom: scale(5),
+  },
+  serviceDescription: {
+    fontSize: scale(12),
+    lineHeight: scale(16),
+  },
+  servicesList: {
+    paddingBottom: scale(20),
   },
 });

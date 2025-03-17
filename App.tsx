@@ -11,7 +11,8 @@ import {
   Image, 
   Appearance,
   Platform, 
-  ScrollView
+  ScrollView,
+  SafeAreaView
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
@@ -435,7 +436,7 @@ export default function App() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
 
       {activePage === 'Home' ? (
@@ -622,7 +623,7 @@ export default function App() {
           onPress={() => setActivePage('Conta')}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -631,6 +631,7 @@ export default function App() {
 const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: 10,
   },
   contentContainer: {
     paddingBottom: scale(20),

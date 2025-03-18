@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
   View, 
   Text, 
   FlatList, 
   TouchableOpacity, 
-  TextInput 
+  TextInput, 
+  Animated,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -40,6 +42,55 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   suggestions,
   renderSuggestion,
 }) => {
+
+    const renderTabButton = (tab: string) => {
+        const animatedScale = useRef(new Animated.Value(1)).current;
+
+        const handlePressIn = () => {
+            Animated.spring(animatedScale, {
+            toValue: 0.95,
+            useNativeDriver: true,
+            }).start();
+        };
+
+        const handlePressOut = () => {
+            Animated.spring(animatedScale, {
+            toValue: 1,
+            friction: 5,
+            tension: 100,
+            useNativeDriver: true,
+            }).start();
+        };
+
+        const isActive = selectedTab === tab;
+      return (
+        <TouchableWithoutFeedback
+          key={tab}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          onPress={() => setSelectedTab(tab as TabType)}
+        >
+          <Animated.View
+            style={[
+              styles.tabButton,
+              isActive && styles.activeTab,
+              { transform: [{ scale: animatedScale }] }
+            ]}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                { color: colors.text },
+                isActive && styles.activeTabText,
+              ]}
+            >
+              {tab}
+            </Text>
+          </Animated.View>
+        </TouchableWithoutFeedback>
+      );
+  };
+    
   return (
     <FlatList
       data={[]}
@@ -50,26 +101,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
         <>
           {/* Seção de Tabs "Viagem" e "Serviços" */}
           <View style={styles.header}>
-            {['Viagem', 'Serviços'].map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setSelectedTab(tab as TabType)}
-                style={[
-                  styles.tabButton,
-                  selectedTab === tab && styles.activeTab,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    { color: colors.text },
-                    selectedTab === tab && styles.activeTabText,
-                  ]}
-                >
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {['Viagem', 'Serviços'].map(renderTabButton)}
           </View>
 
           {/* Campo de busca */}

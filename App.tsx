@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { 
   StyleSheet, 
@@ -9,7 +9,9 @@ import {
   FlatList, 
   Image, 
   Appearance,
-  SafeAreaView
+  SafeAreaView,
+  Animated,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
@@ -17,6 +19,8 @@ import HomeTabContent from './src/components/HomeTabContent';
 import AccountScreen from './src/pages/AccountScreen';
 import ActivityScreen from './src/pages/ActivityScreen';
 import { ActivityItem, NavigationButtonProps, PageType, ServiceItem, SuggestionItem, TabType, UserData, Vehicle, } from './src/types';
+import ServicesScreen from './src/pages/ServicesScreen';
+import ServiceDetailScreen from './src/pages/ServiceDetailScreen';
 
 
 // Configurações de tema
@@ -75,26 +79,59 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
   const { colors, styles } = useTheme();
   const isActive = activePage === page;
 
+  // Valor animado para translação horizontal (inicia em 0)
+  const animatedTranslateX = useRef(new Animated.Value(0)).current;
+
+   // Quando o botão é pressionado
+   const handlePressIn = () => {
+    Animated.spring(animatedTranslateX, {
+      toValue: 10,     // encolhe um pouco
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // Quando o botão é solto
+  const handlePressOut = () => {
+    Animated.spring(animatedTranslateX, {
+      toValue: 1,        // volta ao tamanho normal
+      friction: 5,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
-    <TouchableOpacity
+    <TouchableWithoutFeedback
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={onPress}
-      style={styles.navButton}
-      accessibilityRole="button"
-      accessibilityLabel={`Navegar para ${label}`}
     >
-      <MaterialCommunityIcons 
-        name={icon as any} 
-        size={scale(24)} 
-        color={isActive ? colors.primary : colors.text} 
-      />
-      <Text style={[
-        styles.navText,
-        { color: isActive ? colors.primary : colors.text },
-        isActive && styles.activeNavText
-      ]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.navButton,
+          {
+            transform: [{ translateX: animatedTranslateX  }],
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`Navegar para ${label}`}
+      >
+        <MaterialCommunityIcons
+          name={icon as any}
+          size={scale(24)}
+          color={isActive ? colors.primary : colors.text}
+        />
+        <Text
+          style={[
+            styles.navText,
+            { color: isActive ? colors.primary : colors.text },
+            isActive && styles.activeNavText
+          ]}
+        >
+          {label}
+        </Text>
+      </Animated.View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -105,6 +142,8 @@ export default function App() {
   const [searchText, setSearchText] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [activePage, setActivePage] = useState<PageType>('Home');
+  // Aqui guardamos qual serviço foi selecionado
+  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
 
   const services: ServiceItem[] = [
     {
@@ -321,8 +360,15 @@ export default function App() {
   
   const handleServiceSelect = (service: ServiceItem) => {
     // Lógica para seleção de serviço
+    setSelectedService(service);
     console.log('Serviço selecionado:', service.title);
+    setActivePage('DetalhesServiço');
   };
+
+    // Função para voltar da tela de detalhes
+    const handleBack = () => {
+      setActivePage('Serviços');
+    };
 
   const suggestions: SuggestionItem[] = [
     { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg' },
@@ -405,20 +451,13 @@ export default function App() {
         renderSuggestion={renderSuggestion}
       />
       ) : activePage === 'Serviços' ?(
-        <View style={styles.servicesContainer}>
-        <Text style={[styles.sectionTitle, {color: colors.text}]}>
-          Serviços Disponíveis
-        </Text>
-        
-        <FlatList
-          data={services}
-          renderItem={renderServiceItem}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.servicesList}
-          showsVerticalScrollIndicator={false}
+        <ServicesScreen
+          services={services}
+          handleServiceSelect={handleServiceSelect}
+          styles={styles}
+          colors={colors}
+          scale={scale}
         />
-      </View>
       ) : activePage === 'Atividade' ?(
         <ActivityScreen
           activities={activities}
@@ -435,6 +474,14 @@ export default function App() {
           accountOptions={accountOptions}
           renderVehicleItem={renderVehicleItem}
           renderAccountOption={renderAccountOption}
+        />
+      ) : activePage === 'DetalhesServiço' && selectedService ?(
+        <ServiceDetailScreen
+          service={selectedService}
+          onBack={handleBack}
+          styles={styles}
+          colors={colors}
+          scale={(size) => size}
         />
       ) : (
         <View style={styles.otherPages}>
@@ -775,5 +822,76 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   },
   optionsList: {
     marginBottom: scale(30),
+  },
+  detailHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: scale(20),
+    paddingTop: scale(10),
+    paddingBottom: scale(10),
+  },
+  detailBackButton: {
+    marginRight: scale(10),
+    padding: scale(5),
+  },
+  detailHeaderTitle: {
+    fontSize: scale(18),
+    fontWeight: '600',
+  },
+
+  detailHeroContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: scale(30),
+    borderBottomLeftRadius: scale(20),
+    borderBottomRightRadius: scale(20),
+    marginBottom: scale(20),
+    // Se quiser sombra no container hero:
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  detailHeroIcon: {
+    marginBottom: scale(10),
+  },
+  detailHeroTitle: {
+    fontSize: scale(22),
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingHorizontal: scale(20),
+  },
+
+  detailContentContainer: {
+    paddingHorizontal: scale(20),
+    paddingBottom: scale(20),
+  },
+  detailSectionTitle: {
+    fontSize: scale(16),
+    fontWeight: '600',
+    marginBottom: scale(6),
+  },
+  detailDescription: {
+    fontSize: scale(14),
+    lineHeight: scale(20),
+  },
+
+  detailActionButton: {
+    marginVertical: scale(20),
+    paddingVertical: scale(14),
+    borderRadius: scale(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Exemplo: se quiser sombrear o botão
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  detailActionButtonText: {
+    fontSize: scale(16),
+    fontWeight: '600',
   },
 });

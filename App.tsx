@@ -6,68 +6,18 @@ import {
   TouchableOpacity, 
   View, 
   Dimensions, 
-  TextInput, 
   FlatList, 
   Image, 
   Appearance,
-  Platform, 
-  ScrollView,
   SafeAreaView
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
+import HomeTabContent from './src/components/HomeTabContent';
+import AccountScreen from './src/pages/AccountScreen';
+import ActivityScreen from './src/pages/ActivityScreen';
+import { ActivityItem, NavigationButtonProps, PageType, ServiceItem, SuggestionItem, TabType, UserData, Vehicle, } from './src/types';
 
-// Tipos e interfaces
-type TabType = 'Viagem' | 'Serviços';
-type PageType = 'Home' | 'Serviços' | 'Atividade' | 'Conta';
-
-interface ServiceItem {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-  color: string;
-}
-
-interface SuggestionItem {
-  id: string;
-  src: string;
-  title: string;
-}
-
-interface ActivityItem {
-  id: string;
-  date: Date;
-  title: string;
-  description: string;
-  status: 'completed' | 'pending' | 'cancelled';
-  price?: number;
-  icon: string;
-}
-
-interface UserData {
-  name: string;
-  email: string;
-  profileImage: string;
-  vehicles: Vehicle[];
-}
-
-interface Vehicle {
-  id: string;
-  model: string;
-  plate: string;
-  color: string;
-}
-
-
-interface NavigationButtonProps {
-  page: PageType;
-  label: string;
-  icon: string;
-  activePage: PageType;
-  theme: 'light' | 'dark';
-  onPress: () => void;
-}
 
 // Configurações de tema
 const colorSchemes = {
@@ -273,7 +223,7 @@ export default function App() {
       style={styles.optionItem}
       onPress={() => handleOptionSelect(item.screen)}
     >
-      <Ionicons name={item.icon} size={scale(20)} color={colors.text} />
+      <Ionicons name={item.icon as any} size={scale(20)} color={colors.text} />
       <Text style={[styles.optionText, {color: colors.text}]}>{item.title}</Text>
       <Ionicons name="chevron-forward" size={scale(20)} color={colors.placeholder} />
     </TouchableOpacity>
@@ -291,7 +241,7 @@ export default function App() {
     >
       <View style={styles.activityHeader}>
         <Ionicons 
-          name={item.icon} 
+          name={item.icon as any} 
           size={scale(20)} 
           color={colors.text} 
           style={styles.activityIcon}
@@ -331,23 +281,23 @@ export default function App() {
     }).replace(/\./g, '');
   };
 
-  const translateStatus = (status: string) => {
-    const translations = {
-      completed: 'Concluído',
-      pending: 'Pendente',
-      cancelled: 'Cancelado',
+  const translateStatus = (status: 'completed' | 'pending' | 'cancelled') => {
+      const translations = {
+        completed: 'Concluído',
+        pending: 'Pendente',
+        cancelled: 'Cancelado',
+      };
+      return translations[status] || status;
     };
-    return translations[status] || status;
-  };
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      completed: {bg: '#E3FCEF', text: '#006644'},
-      pending: {bg: '#FFF6E6', text: '#FF8B00'},
-      cancelled: {bg: '#FFEBE6', text: '#BF2600'},
+  const getStatusColor = (status: 'completed' | 'pending' | 'cancelled') => {
+      const colors = {
+        completed: {bg: '#E3FCEF', text: '#006644'},
+        pending: {bg: '#FFF6E6', text: '#FF8B00'},
+        cancelled: {bg: '#FFEBE6', text: '#BF2600'},
+      };
+      return colors[status] || {bg: '#EAECF0', text: '#344054'};
     };
-    return colors[status] || {bg: '#EAECF0', text: '#344054'};
-  };
 
   const handleActivityPress = (activity: ActivityItem) => {
     // Navegar para detalhes da atividade
@@ -360,7 +310,7 @@ export default function App() {
       onPress={() => handleServiceSelect(item)}
     >
       <View style={[styles.serviceIconContainer, {backgroundColor: item.color + '20'}]}>
-        <Ionicons name={item.icon} size={scale(28)} color={item.color} />
+        <Ionicons name={item.icon as any} size={scale(28)} color={item.color} />
       </View>
       <Text style={[styles.serviceTitle, {color: colors.text}]}>{item.title}</Text>
       <Text style={[styles.serviceDescription, {color: colors.placeholder}]}>
@@ -375,10 +325,10 @@ export default function App() {
   };
 
   const suggestions: SuggestionItem[] = [
-    { id: '1', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido' },
-    { id: '2', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h' },
-    { id: '3', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada' },
-    { id: '4', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica' },
+    { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg' },
+    { id: 2, name: 'Emergência 24h', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h', image: 'https://example.com/tow-truck2.jpg' },
+    { id: 3, name: 'Carga Pesada', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada', image: 'https://example.com/tow-truck3.jpg' },
+    { id: 4, name: 'Assistência Técnica', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica', image: 'https://example.com/tow-truck4.jpg' },
   ];
 
   // Carregar histórico
@@ -429,7 +379,7 @@ export default function App() {
 
   const renderSuggestion = ({ item }: { item: SuggestionItem }) => (
     <TouchableOpacity style={styles.suggestionContainer}>
-      <Image source={{ uri: item.src }} style={styles.suggestionImage} />
+      <Image source={{ uri: item.image }} style={styles.suggestionImage} />
       <View style={styles.imageOverlay} />
       <Text style={styles.suggestionTitle}>{item.title}</Text>
     </TouchableOpacity>
@@ -440,77 +390,20 @@ export default function App() {
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
 
       {activePage === 'Home' ? (
-        <FlatList
-          data={[]}
-          renderItem={() => null}
-          ListHeaderComponent={
-            <>
-              <View style={styles.header}>
-                {['Viagem', 'Serviços'].map((tab) => (
-                  <TouchableOpacity
-                    key={tab}
-                    onPress={() => setSelectedTab(tab as TabType)}
-                    style={[
-                      styles.tabButton,
-                      selectedTab === tab && styles.activeTab,
-                    ]}
-                  >
-                    <Text style={[
-                      styles.tabText,
-                      { color: colors.text },
-                      selectedTab === tab && styles.activeTabText
-                    ]}>
-                      {tab}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
-                <TextInput
-                  style={[styles.searchInput, { color: colors.text }]}
-                  placeholder="Para onde?"
-                  placeholderTextColor={colors.placeholder}
-                  value={searchText}
-                  onChangeText={setSearchText}
-                  onSubmitEditing={handleSearch}
-                />
-                <TouchableOpacity 
-                  style={[styles.searchButton, { backgroundColor: colors.primary }]}
-                  onPress={handleSearch}
-                >
-                  <Ionicons name="search" size={scale(20)} color="white" />
-                </TouchableOpacity>
-              </View>
-
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Histórico
-              </Text>
-              <FlatList
-                data={history}
-                renderItem={renderItem}
-                keyExtractor={(item, index) => index.toString()}
-                scrollEnabled={false}
-              />
-            </>
-          }
-          ListFooterComponent={
-            <>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Sugestões
-              </Text>
-              <FlatList
-                horizontal
-                data={suggestions}
-                renderItem={renderSuggestion}
-                keyExtractor={(item) => item.id}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.suggestionsList}
-              />
-            </>
-          }
-          contentContainerStyle={styles.contentContainer}
-        />
+        <HomeTabContent
+        selectedTab={selectedTab}
+        setSelectedTab={setSelectedTab}
+        styles={styles}
+        colors={colors}
+        scale={scale} // se você tiver a função scale importada
+        searchText={searchText}
+        setSearchText={setSearchText}
+        handleSearch={handleSearch}
+        history={history}
+        renderItem={renderItem}
+        suggestions={suggestions}
+        renderSuggestion={renderSuggestion}
+      />
       ) : activePage === 'Serviços' ?(
         <View style={styles.servicesContainer}>
         <Text style={[styles.sectionTitle, {color: colors.text}]}>
@@ -527,62 +420,22 @@ export default function App() {
         />
       </View>
       ) : activePage === 'Atividade' ?(
-        <FlatList
-            data={activities}
-            renderItem={renderActivityItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.activityContainer}
-            ListHeaderComponent={
-              <Text style={[styles.sectionTitle, {color: colors.text}]}>
-                Histórico de Atividades
-              </Text>
-            }
-          />
+        <ActivityScreen
+          activities={activities}
+          renderActivityItem={renderActivityItem}
+          styles={styles}
+          colors={colors}
+        />
       ) : activePage === 'Conta' ?(
-        <ScrollView contentContainerStyle={styles.accountContainer}>
-            {/* Header do Perfil */}
-            <View style={styles.profileHeader}>
-              <Image
-                source={{uri: userData.profileImage}}
-                style={styles.profileImage}
-              />
-              <View style={styles.profileInfo}>
-                <Text style={[styles.profileName, {color: colors.text}]}>
-                  {userData.name}
-                </Text>
-                <Text style={[styles.profileEmail, {color: colors.placeholder}]}>
-                  {userData.email}
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.editButton}>
-                <Ionicons name="pencil" size={scale(18)} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Seção de Veículos */}
-            <Text style={[styles.sectionTitle, {color: colors.text}]}>
-              Meus Veículos
-            </Text>
-            <FlatList
-              data={userData.vehicles}
-              renderItem={renderVehicleItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              contentContainerStyle={styles.vehicleList}
-            />
-
-            {/* Opções da Conta */}
-            <Text style={[styles.sectionTitle, {color: colors.text}]}>
-              Configurações
-            </Text>
-            <FlatList
-              data={accountOptions}
-              renderItem={renderAccountOption}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              contentContainerStyle={styles.optionsList}
-            />
-          </ScrollView>
+        <AccountScreen
+          userData={userData}
+          styles={styles}
+          colors={colors}
+          scale={scale}
+          accountOptions={accountOptions}
+          renderVehicleItem={renderVehicleItem}
+          renderAccountOption={renderAccountOption}
+        />
       ) : (
         <View style={styles.otherPages}>
           <Text style={{ color: colors.text }}>{activePage} Page</Text>

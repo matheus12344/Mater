@@ -143,10 +143,8 @@ export default function App() {
   const [searchText, setSearchText] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [activePage, setActivePage] = useState<PageType>('Home');
-  // Aqui guardamos qual serviço foi selecionado
-  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
-  // Armazena a atividade selecionada
-  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null); // Aqui guardamos qual serviço foi selecionado
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);  // Armazena a atividade selecionada
 
   const services: ServiceItem[] = [
     {
@@ -784,6 +782,7 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     height: scale(60),
     borderRadius: scale(30),
     marginRight: scale(15),
+    backgroundColor: '#E0E0E0',
   },
   profileInfo: {
     flex: 1,

@@ -22,6 +22,7 @@ import { ActivityItem, NavigationButtonProps, PageType, ServiceItem, SuggestionI
 import ServicesScreen from './src/pages/ServicesScreen';
 import ServiceDetailScreen from './src/pages/ServiceDetailScreen';
 import ActivityDetailScreen from './src/pages/ActivityDetailScreen';
+import { ActivityProvider } from './src/context/ActivityContext';
 
 
 // Configurações de tema
@@ -192,32 +193,53 @@ export default function App() {
   ];
 
   const activities: ActivityItem[] = [
-    {
-      id: '1',
-      date: new Date(2024, 2, 15),
-      title: 'Guincho Particular',
-      description: 'Remoção do local - Av. Paulista, 1000',
-      status: 'completed',
-      price: 250.0,
-      icon: 'car-sport',
-    },
-    {
-      id: '2',
-      date: new Date(2024, 2, 16),
-      title: 'Troca de Bateria',
-      description: 'Honda Civic 2020 - Bateria 60Ah',
-      status: 'pending',
-      icon: 'battery-charging',
-    },
-    {
-      id: '3',
-      date: new Date(2024, 2, 17),
-      title: 'SOS Combustível',
-      description: 'Entrega de 5L de gasolina',
-      status: 'cancelled',
-      icon: 'water',
-    },
-  ];
+      {
+        id: '1',
+        date: new Date(2024, 2, 15),
+        title: 'Guincho Particular',
+        description: 'Remoção do local - Av. Paulista, 1000',
+        status: 'completed',
+        price: 250.0,
+        icon: 'car-sport',
+        serviceId: '1',
+        vehicle: {
+          model: 'Honda Civic 2020',
+          plate: 'ABC1D23',
+          color: '#FF6B6B',
+        },
+        location: { address: 'Av. Paulista, 1000', coords: { latitude: -23.561684, longitude: -46.655981 } },
+      },
+      {
+        id: '2',
+        date: new Date(2024, 2, 16),
+        title: 'Troca de Bateria',
+        description: 'Honda Civic 2020 - Bateria 60Ah',
+        status: 'pending',
+        icon: 'battery-charging',
+        serviceId: '2',
+        vehicle: {
+          model: 'Honda Civic 2020',
+          plate: 'ABC1D23',
+          color: '#FF6B6B',
+        },
+        location: { address: 'Rua das Flores, 123', coords: { latitude: -23.561684, longitude: -46.655981 } },
+      },
+      {
+        id: '3',
+        date: new Date(2024, 2, 17),
+        title: 'SOS Combustível',
+        description: 'Entrega de 5L de gasolina',
+        status: 'cancelled',
+        icon: 'water',
+        serviceId: '3',
+        vehicle: {
+          model: 'Fiat Toro 2022',
+          plate: 'XYZ4E56',
+          color: '#4ECDC4',
+        },
+        location: { address: 'Av. Brasil, 456', coords: { latitude: -23.561684, longitude: -46.655981 } },
+      },
+    ];
 
   const [userData, setUserData] = useState<UserData>({
     name: 'Matheus Henrique',
@@ -441,108 +463,110 @@ export default function App() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor= {colors.background} />
+    <ActivityProvider>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor= {colors.background} />
 
-      {activePage === 'Home' ? (
-        <HomeTabContent
-        selectedTab={selectedTab}
-        setSelectedTab={setSelectedTab}
-        styles={styles}
-        colors={colors}
-        scale={scale} // se você tiver a função scale importada
-        searchText={searchText}
-        setSearchText={setSearchText}
-        handleSearch={handleSearch}
-        history={history}
-        renderItem={renderItem}
-        suggestions={suggestions}
-        renderSuggestion={renderSuggestion}
-      />
-      ) : activePage === 'Serviços' ?(
-        <ServicesScreen
-          services={services}
-          handleServiceSelect={handleServiceSelect}
+        {activePage === 'Home' ? (
+          <HomeTabContent
+          selectedTab={selectedTab}
+          setSelectedTab={setSelectedTab}
           styles={styles}
           colors={colors}
           scale={scale}
+          searchText={searchText}
+          setSearchText={setSearchText}
+          handleSearch={handleSearch}
+          history={history}
+          renderItem={renderItem}
+          suggestions={suggestions}
+          renderSuggestion={renderSuggestion}
         />
-      ) : activePage === 'Atividade' ?(
-        <ActivityScreen
-          activities={activities}
-          renderActivityItem={renderActivityItem}
-          styles={styles}
-          colors={colors}
-        />
-      ) : activePage === 'DetalhesAtividade' && selectedActivity  ?(
-        <ActivityDetailScreen
-          activity={selectedActivity}
-          onBack={handleActivityBack}
-          styles={styles}
-          colors={colors}
-          scale={(size) => size}
-        />
-      ) : activePage === 'Conta' ?(
-        <AccountScreen
-          userData={userData}
-          setUserData={setUserData}
-          styles={styles}
-          colors={colors}
-          scale={scale}
-          accountOptions={accountOptions}
-          renderVehicleItem={renderVehicleItem}
-          renderAccountOption={renderAccountOption}
-        />
-      ) : activePage === 'DetalhesServiço' && selectedService ?(
-        <ServiceDetailScreen
-          service={selectedService}
-          onBack={handleBack}
-          styles={styles}
-          colors={colors}
-          scale={scale}
-          userVehicles={userData.vehicles} // Adicione esta prop
-        />
-      ) : (
-        <View style={styles.otherPages}>
-          <Text style={{ color: colors.text }}>{activePage} Page</Text>
+        ) : activePage === 'Serviços' ?(
+          <ServicesScreen
+            services={services}
+            handleServiceSelect={handleServiceSelect}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+          />
+        ) : activePage === 'Atividade' ?(
+          <ActivityScreen
+            activities={activities}
+            renderActivityItem={renderActivityItem}
+            styles={styles}
+            colors={colors}
+          />
+        ) : activePage === 'DetalhesAtividade' && selectedActivity  ?(
+          <ActivityDetailScreen
+            activity={selectedActivity}
+            onBack={handleActivityBack}
+            styles={styles}
+            colors={colors}
+            scale={(size) => size}
+          />
+        ) : activePage === 'Conta' ?(
+          <AccountScreen
+            userData={userData}
+            setUserData={setUserData}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+            accountOptions={accountOptions}
+            renderVehicleItem={renderVehicleItem}
+            renderAccountOption={renderAccountOption}
+          />
+        ) : activePage === 'DetalhesServiço' && selectedService ?(
+          <ServiceDetailScreen
+            service={selectedService}
+            onBack={handleBack}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+            userVehicles={userData.vehicles}
+          />
+        ) : (
+          <View style={styles.otherPages}>
+            <Text style={{ color: colors.text }}>{activePage} Page</Text>
+          </View>
+        )}
+
+        <View style={[styles.footer, { borderTopColor: colors.border }]}>
+          <NavigationButton
+            page="Home"
+            label="Home"
+            icon="home"
+            activePage={activePage}
+            theme={theme}
+            onPress={() => setActivePage('Home')}
+          />
+          <NavigationButton
+            page="Serviços"
+            label="Serviços"
+            icon="tools"
+            activePage={activePage}
+            theme={theme}
+            onPress={() => setActivePage('Serviços')}
+          />
+          <NavigationButton
+            page="Atividade"
+            label="Atividade"
+            icon="clipboard-list"
+            activePage={activePage}
+            theme={theme}
+            onPress={() => setActivePage('Atividade')}
+          />
+          <NavigationButton
+            page="Conta"
+            label="Conta"
+            icon="account"
+            activePage={activePage}
+            theme={theme}
+            onPress={() => setActivePage('Conta')}
+          />
         </View>
-      )}
-
-      <View style={[styles.footer, { borderTopColor: colors.border }]}>
-        <NavigationButton
-          page="Home"
-          label="Home"
-          icon="home"
-          activePage={activePage}
-          theme={theme}
-          onPress={() => setActivePage('Home')}
-        />
-        <NavigationButton
-          page="Serviços"
-          label="Serviços"
-          icon="tools"
-          activePage={activePage}
-          theme={theme}
-          onPress={() => setActivePage('Serviços')}
-        />
-        <NavigationButton
-          page="Atividade"
-          label="Atividade"
-          icon="clipboard-list"
-          activePage={activePage}
-          theme={theme}
-          onPress={() => setActivePage('Atividade')}
-        />
-        <NavigationButton
-          page="Conta"
-          label="Conta"
-          icon="account"
-          activePage={activePage}
-          theme={theme}
-          onPress={() => setActivePage('Conta')}
-        />
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ActivityProvider>
   );
 }
 
@@ -726,6 +750,51 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 16,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    padding: 32,
+  },
+  // No seu arquivo de estilos
+  emptyButton: {
+    backgroundColor: colorSchemes[theme].primary,
+    borderRadius: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colorSchemes[theme].primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#FFFFFF20',
+    // Efeito de gradiente (se suportado)
+    // backgroundGradient: {
+    //   colors: [colorSchemes[theme].primary, '#8E2DE2'], // Gradiente vertical
+    //   start: { x: 0, y: 0 },
+    //   end: { x: 1, y: 0 }
+    // },
+    transform: [{ scale: 1 }],
+  },
+  emptyButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(0,0,0,0.1)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    marginLeft: 10,
+  },
   activityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -751,6 +820,27 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     fontSize: scale(16),
     fontWeight: '600',
     marginBottom: scale(4),
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
+  priceText: {
+    fontSize: 14,
+    color: '#2ecc71',
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#999',
+    marginTop: 32,
   },
   activityDescription: {
     fontSize: scale(14),

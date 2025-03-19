@@ -9,8 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Vehicle } from '../types';
+import { ActivityItem, Vehicle } from '../types';
 import * as Location from 'expo-location';
+import { useActivities } from '../context/ActivityContext';
 
 export interface ServiceItem {
   id: string;
@@ -51,6 +52,7 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
     coords: { latitude: number; longitude: number },
     address?: string 
   } | null>(null);
+  const { addActivity } = useActivities();
 
   // Quando o usuário toca no botão "Solicitar"
   const handleSolicitar = () => {
@@ -148,6 +150,27 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   // Confirma a solicitação
   const handleConfirmSolicitar = () => {
     if (!selectedVehicle || !incidentLocation) return;
+
+    const newActivity: Omit<ActivityItem, 'id'> = {
+      date: new Date(),
+      serviceId: service.id,
+      title: service.title,
+      description: service.description,
+      status: 'pending',
+      vehicle: {
+        model: selectedVehicle.model,
+        plate: selectedVehicle.plate,
+        color: selectedVehicle.color
+      },
+      location: {
+        address: incidentLocation.address,
+        coords: incidentLocation.coords
+      },
+      // price: service.price, // Se aplicável
+      icon: service.icon // Add this line
+    };
+
+    addActivity(newActivity);
 
     const serviceRequest = {
       service: service.title,

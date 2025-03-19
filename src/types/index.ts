@@ -8,15 +8,26 @@ interface SuggestionItem {
 }
 
 interface ActivityItem {
-    id: string;
-    date: Date;
-    title: string;
-    description: string;
-    status: 'completed' | 'pending' | 'cancelled';
-    price?: number;
-    icon: string;
-  }
-
+  id: string;
+  date: Date;
+  serviceId: string;
+  title: string;
+  description: string;
+  status: 'completed' | 'pending' | 'cancelled';
+  vehicle: {
+    model: string;
+    plate: string;
+    color: string;
+  };
+  location: {
+    address?: string;
+    coords: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  price?: number;
+}
   
   interface ServiceItem {
     id: string;

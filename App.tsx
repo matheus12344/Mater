@@ -21,6 +21,7 @@ import ActivityScreen from './src/pages/ActivityScreen';
 import { ActivityItem, NavigationButtonProps, PageType, ServiceItem, SuggestionItem, TabType, UserData, Vehicle, } from './src/types';
 import ServicesScreen from './src/pages/ServicesScreen';
 import ServiceDetailScreen from './src/pages/ServiceDetailScreen';
+import ActivityDetailScreen from './src/pages/ActivityDetailScreen';
 
 
 // Configurações de tema
@@ -144,6 +145,8 @@ export default function App() {
   const [activePage, setActivePage] = useState<PageType>('Home');
   // Aqui guardamos qual serviço foi selecionado
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
+  // Armazena a atividade selecionada
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
 
   const services: ServiceItem[] = [
     {
@@ -218,7 +221,7 @@ export default function App() {
     },
   ];
 
-  const [userData] = useState<UserData>({
+  const [userData, setUserData] = useState<UserData>({
     name: 'Matheus Henrique',
     email: 'matheushgevangelista@gmail.com',
     profileImage: 'https://example.com/profile.jpg',
@@ -245,6 +248,12 @@ export default function App() {
     { id: '4', icon: 'help-circle', title: 'Ajuda', screen: 'Help' },
     { id: '5', icon: 'log-out', title: 'Sair', screen: 'Logout' },
   ];
+
+  // Função para voltar
+  const handleActivityBack = () => {
+    setActivePage('Atividade');
+    setSelectedActivity(null);
+  };
 
   const renderVehicleItem = ({item}: {item: Vehicle}) => (
     <View style={[styles.vehicleCard, {backgroundColor: colors.card}]}>
@@ -339,6 +348,8 @@ export default function App() {
     };
 
   const handleActivityPress = (activity: ActivityItem) => {
+    setSelectedActivity(activity);
+    setActivePage('DetalhesAtividade');
     // Navegar para detalhes da atividade
     console.log('Atividade selecionada:', activity);
   };
@@ -465,9 +476,18 @@ export default function App() {
           styles={styles}
           colors={colors}
         />
+      ) : activePage === 'DetalhesAtividade' && selectedActivity  ?(
+        <ActivityDetailScreen
+          activity={selectedActivity}
+          onBack={handleActivityBack}
+          styles={styles}
+          colors={colors}
+          scale={(size) => size}
+        />
       ) : activePage === 'Conta' ?(
         <AccountScreen
           userData={userData}
+          setUserData={setUserData}
           styles={styles}
           colors={colors}
           scale={scale}
@@ -531,7 +551,7 @@ export default function App() {
 const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 10,
+    marginTop: 20,
   },
   contentContainer: {
     paddingBottom: scale(20),

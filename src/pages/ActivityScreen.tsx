@@ -26,6 +26,9 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
           Histórico de Atividades
         </Text>
       }
+      ListEmptyComponent={
+        <Text style={{ color: colors.placeholder }}>Nenhuma atividade</Text> // Mensagem de lista vazia
+      }
     />
   );
 };

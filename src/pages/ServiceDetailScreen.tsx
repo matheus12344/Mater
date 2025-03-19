@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  ScrollView, 
-  Animated 
+  ScrollView,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// Ajuste a importação do tipo ServiceItem conforme a sua estrutura.
-// Se você já definiu ServiceItem em um "types.ts", importe de lá.
-// Aqui vou colocar como exemplo direto:
+// Se você já definiu ServiceItem em outro lugar, importe de lá.
+// Aqui está apenas como exemplo:
 export interface ServiceItem {
   id: string;
   icon: string;
@@ -20,11 +21,11 @@ export interface ServiceItem {
 }
 
 interface ServiceDetailScreenProps {
-  service: ServiceItem;              // Serviço selecionado
-  onBack: () => void;                // Função para voltar ou fechar tela
-  styles: any;                       // Objeto de estilos retornado por createStyles
-  colors: any;                       // Objeto de cores do tema
-  scale: (size: number) => number;   // Função de responsividade
+  service: ServiceItem;              
+  onBack: () => void;                
+  styles: any;                       
+  colors: any;                       
+  scale: (size: number) => number;   
 }
 
 const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
@@ -34,6 +35,26 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   colors,
   scale,
 }) => {
+  // Estado para controlar a visibilidade do modal
+  const [requestModalVisible, setRequestModalVisible] = useState(false);
+
+  // Quando o usuário toca no botão "Solicitar"
+  const handleSolicitar = () => {
+    setRequestModalVisible(true);
+  };
+
+  // Confirma a solicitação
+  const handleConfirmSolicitar = () => {
+    setRequestModalVisible(false);
+    // Aqui você pode chamar uma API, navegar para outra tela, etc.
+    console.log("Serviço solicitado:", service.title);
+    Alert.alert('Solicitação enviada', 'Seu pedido foi enviado com sucesso!');
+  };
+
+  // Cancela a solicitação
+  const handleCancelSolicitar = () => {
+    setRequestModalVisible(false);
+  };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -71,7 +92,7 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
           {service.description}
         </Text>
 
-        {/* Exemplo de outra seção: Benefícios */}
+        {/* Benefícios (exemplo) */}
         <Text 
           style={[
             styles.detailSectionTitle, 
@@ -86,25 +107,85 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
           • Cobertura nacional
         </Text>
 
-        {/* Botão de ação (Solicitar, Contratar, etc.) */}
+        {/* Botão de ação (Solicitar) */}
         <TouchableOpacity 
           style={[
             styles.detailActionButton, 
             { backgroundColor: service.color + 'DD' }
           ]}
-          onPress={() => {
-            // Exemplo de ação: 
-            // chamar API, iniciar solicitação, ou abrir outro modal
-            console.log("Serviço solicitado:", service.title);
-          }}
+          onPress={handleSolicitar}
         >
           <Text style={[styles.detailActionButtonText, { color: '#fff' }]}>
             Solicitar
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* MODAL de Confirmação de Solicitação */}
+      <Modal
+        visible={requestModalVisible}
+        animationType="slide"
+        transparent
+      >
+        <View style={localStyles.modalOverlay}>
+          <View style={[localStyles.modalContainer, { backgroundColor: colors.card }]}>
+            <Text style={[localStyles.modalTitle, { color: colors.text }]}>
+              Confirmar Solicitação
+            </Text>
+            <Text style={{ color: colors.placeholder, marginBottom: scale(12) }}>
+              Você está prestes a solicitar o serviço {service.title}.
+            </Text>
+
+            <View style={localStyles.modalButtonsContainer}>
+              <TouchableOpacity
+                style={[localStyles.modalButton, { backgroundColor: colors.border }]}
+                onPress={handleCancelSolicitar}
+              >
+                <Text style={{ color: colors.text }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[localStyles.modalButton, { backgroundColor: service.color }]}
+                onPress={handleConfirmSolicitar}
+              >
+                <Text style={{ color: '#fff' }}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 };
+
+// Estilos locais para o modal
+const localStyles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalContainer: {
+    borderRadius: 12,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  modalButton: {
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+});
 
 export default ServiceDetailScreen;

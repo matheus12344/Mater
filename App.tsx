@@ -442,7 +442,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor= {colors.background} />
 
       {activePage === 'Home' ? (
         <HomeTabContent
@@ -499,7 +499,8 @@ export default function App() {
           onBack={handleBack}
           styles={styles}
           colors={colors}
-          scale={(size) => size}
+          scale={scale}
+          userVehicles={userData.vehicles} // Adicione esta prop
         />
       ) : (
         <View style={styles.otherPages}>
@@ -549,7 +550,7 @@ export default function App() {
 const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 20,
+    marginTop: 25,
   },
   contentContainer: {
     paddingBottom: scale(20),
@@ -902,7 +903,6 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     borderRadius: scale(10),
     alignItems: 'center',
     justifyContent: 'center',
-    // Exemplo: se quiser sombrear o botão
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

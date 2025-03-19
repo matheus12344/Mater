@@ -20,7 +20,8 @@
     "react-native-web": "~0.19.13",
     "expo-image-picker": "~16.0.6",
     "expo-location": "~18.0.8",
-    "expo-linear-gradient": "~14.0.2"
+    "expo-linear-gradient": "~14.0.2",
+    "react-native-reanimated": "~3.16.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -4,6 +4,9 @@ import { ActivityItem } from '../types';
 import { Ionicons } from '@expo/vector-icons';
 import { useActivities } from '../context/ActivityContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+
+const AnimatedButton = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface ActivityScreenProps {
   activities: ActivityItem[];
@@ -73,7 +76,21 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
       )}
     </TouchableOpacity>
   );
+  // Dentro do componente:
+  const scale = useSharedValue(1);
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }]
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+  
   const handleRefresh = async () => {
     setRefreshing(true);
     onRefresh && await onRefresh();
@@ -120,22 +137,14 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({
           <Text style={[styles.emptyText, { color: colors.placeholder }]}>
             Nenhuma atividade registrada
           </Text>
-          <TouchableOpacity 
-              style={styles.emptyButton}
-              onPress={() => {/* sua lógica */}}
-            >
-              <LinearGradient
-                colors={[colors.primary, '#8E2DE2']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[
-                  StyleSheet.absoluteFill, 
-                  { borderRadius: 25 }
-                ]}
-              />
-              <Ionicons name="add-circle" size={22} color="#FFF" />
-              <Text style={styles.emptyButtonText}>Agendar primeiro serviço</Text>
-            </TouchableOpacity>
+          <AnimatedButton
+            style={[styles.emptyButton, animatedStyle]}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+          >
+            <Ionicons name="add-circle" size={22} color="#FFF" />
+            <Text style={styles.emptyButtonText}>Agendar primeiro serviço</Text>
+          </AnimatedButton>
         </View>
       }
       refreshControl={

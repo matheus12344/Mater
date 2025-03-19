@@ -776,12 +776,6 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     elevation: 8,
     borderWidth: 1,
     borderColor: '#FFFFFF20',
-    // Efeito de gradiente (se suportado)
-    // backgroundGradient: {
-    //   colors: [colorSchemes[theme].primary, '#8E2DE2'], // Gradiente vertical
-    //   start: { x: 0, y: 0 },
-    //   end: { x: 1, y: 0 }
-    // },
     transform: [{ scale: 1 }],
   },
   emptyButtonText: {
@@ -794,6 +788,7 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
     marginLeft: 10,
+    textAlign: 'center',
   },
   activityHeader: {
     flexDirection: 'row',

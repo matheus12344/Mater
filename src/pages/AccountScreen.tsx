@@ -8,7 +8,8 @@ import {
   FlatList,
   Modal,
   TextInput,
-  StyleSheet
+  StyleSheet,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker'; 
@@ -80,6 +81,10 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
 
   // Salvar edição do perfil
   const handleSaveProfile = () => {
+    if (!tempName.trim() || !tempEmail.includes('@')) {
+      Alert.alert('Dados inválidos', 'Verifique nome e e-mail');
+      return;
+    }
     setUserData({
       ...userData,
       name: tempName,
@@ -122,6 +127,11 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
 
   // Salvar novo veículo
   const handleSaveVehicle = () => {
+    const plateRegex = /[A-Z]{3}[0-9][A-Z][0-9]{2}/i;
+    if (!tempModel.trim() || !plateRegex.test(tempPlate)) {
+      Alert.alert('Dados inválidos', 'Verifique modelo e placa');
+      return;
+    }
     if (tempModel.trim() && tempPlate.trim()) {
       const newVehicle: Vehicle = {
         id: Math.random().toString(36).substr(2, 9), // ou use alguma lib

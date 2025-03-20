@@ -24,6 +24,7 @@ import ServiceDetailScreen from './src/pages/ServiceDetailScreen';
 import ActivityDetailScreen from './src/pages/ActivityDetailScreen';
 import { ActivityProvider } from './src/context/ActivityContext';
 import { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
+import SettingsScreen from './src/pages/SettingsScreen';
 
 
 // Configurações de tema
@@ -300,6 +301,7 @@ export default function App() {
 
   const handleOptionSelect = (screen: string) => {
     // Lógica de navegação
+    setActivePage(screen as PageType);
     console.log('Navegar para:', screen);
   };
 
@@ -526,6 +528,12 @@ export default function App() {
             colors={colors}
             scale={scale}
             userVehicles={userData.vehicles}
+          />
+        ) : activePage === 'Settings' ?(
+          <SettingsScreen 
+            styles={styles} 
+            colors={colors} 
+            scale={scale} 
           />
         ) : (
           <View style={styles.otherPages}>

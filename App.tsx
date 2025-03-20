@@ -23,6 +23,7 @@ import ServicesScreen from './src/pages/ServicesScreen';
 import ServiceDetailScreen from './src/pages/ServiceDetailScreen';
 import ActivityDetailScreen from './src/pages/ActivityDetailScreen';
 import { ActivityProvider } from './src/context/ActivityContext';
+import { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 
 
 // Configurações de tema
@@ -491,20 +492,21 @@ export default function App() {
             scale={scale}
           />
         ) : activePage === 'Atividade' ?(
-          <ActivityScreen
-            activities={activities}
-            renderActivityItem={renderActivityItem}
-            styles={styles}
-            colors={colors}
-          />
+            <ActivityScreen
+              activities={activities}
+              renderActivityItem={renderActivityItem}
+              styles={styles}
+              colors={colors}
+              handleActivityPress={handleActivityPress}
+            />
         ) : activePage === 'DetalhesAtividade' && selectedActivity  ?(
-          <ActivityDetailScreen
-            activity={selectedActivity}
-            onBack={handleActivityBack}
-            styles={styles}
-            colors={colors}
-            scale={(size) => size}
-          />
+            <ActivityDetailScreen
+              activity={selectedActivity}
+              onBack={handleActivityBack}
+              styles={styles}
+              colors={colors}
+              scale={(size) => size}
+            />
         ) : activePage === 'Conta' ?(
           <AccountScreen
             userData={userData}

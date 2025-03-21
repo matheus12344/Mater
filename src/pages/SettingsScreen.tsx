@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ScrollView,
   Switch,
@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  TextInput
+  TextInput,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext'; // Supondo um contexto de tema
@@ -18,6 +19,11 @@ interface SettingsScreenProps {
   scale: (size: number) => number;
 }
 
+interface PasswordValidation {
+  (password: string): boolean;
+}
+
+
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ styles, colors, scale }) => {
   const { theme, toggleTheme } = useTheme();
   const [changePassModal, setChangePassModal] = useState(false);
@@ -26,6 +32,39 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ styles, colors, scale }
   const [confirmPass, setConfirmPass] = useState('');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+
+  const isPasswordValid: PasswordValidation = (password) => {
+    return password.length >= 6 && /\d/.test(password) && /[!@#$%^&*]/.test(password);
+  };
+
+  const handleChangePassword = useCallback(() => {
+    if (!currentPass || !newPass || !confirmPass) {
+      return Alert.alert('Erro', 'Preencha todos os campos.');
+    }
+
+    if (newPass !== confirmPass) {
+      return Alert.alert('Erro', 'As senhas não coincidem.');
+    }
+
+    if (!isPasswordValid(newPass)) {
+      return Alert.alert('Erro', 'A nova senha deve ter no mínimo 6 caracteres, um número e um caractere especial.');
+    }
+
+    Alert.alert('Sucesso', 'Senha alterada com sucesso!');
+    setChangePassModal(false);
+  }, [currentPass, newPass, confirmPass]);
+
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Você saiu da conta.');
+  };
+
+  const clearCache = () => {
+    Alert.alert('Cache Limpo', 'O cache da aplicação foi limpo.');
+  };
+
+  const openPrivacyPolicy = () => {
+    Alert.alert('Política de Privacidade', 'Redirecionando para a política de privacidade...');
+  };
 
   const securitySettings = [
     {
@@ -44,6 +83,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ styles, colors, scale }
           value={biometricEnabled}
           onValueChange={setBiometricEnabled}
           trackColor={{ true: colors.primary, false: colors.border }}
+          accessibilityLabel="Ativar biometria"
         />
       )
     }
@@ -76,18 +116,34 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ styles, colors, scale }
           value={notificationsEnabled}
           onValueChange={setNotificationsEnabled}
           trackColor={{ true: colors.primary, false: colors.border }}
+          accessibilityLabel="Ativar notificações"
         />
       )
     }
   ];
 
-  const handleChangePassword = () => {
-    // Lógica para alterar senha
-    if (newPass === confirmPass && newPass.length >= 6) {
-      // Chamar API ou atualizar contexto
-      setChangePassModal(false);
-    }
-  };
+  const settings = [
+    {
+      id: '4',
+      icon: 'trash',
+      title: 'Limpar Cache',
+      action: clearCache,
+    },
+    {
+      id: '5',
+      icon: 'document-text',
+      title: 'Política de Privacidade',
+      action: openPrivacyPolicy,
+    },
+    {
+      id: '6',
+      icon: 'log-out',
+      title: 'Sair',
+      action: handleLogout,
+    },
+  ]
+
+  
 
   const renderSettingItem = (item: any) => (
     <TouchableOpacity
@@ -122,6 +178,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ styles, colors, scale }
         Notificações
       </Text>
       {notificationSettings.map(renderSettingItem)}
+
+      {/* Seção de Configurações */}
+      <Text style={[style.sectionTitle, { color: colors.text, marginTop: scale(20) }]}>
+        Configurações
+      </Text>
+      {settings.map(renderSettingItem)}
+      
 
       {/* Modal Alterar Senha */}
       <Modal visible={changePassModal} animationType="slide" transparent>

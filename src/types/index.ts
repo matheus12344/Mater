@@ -1,11 +1,18 @@
 // Tipos e interfaces
 type TabType = 'Viagem' | 'Serviços';
-type PageType = 'Home' | 'Serviços' | 'Atividade' | 'Conta' | 'DetalhesServiço' | 'DetalhesAtividade' | 'DetalhesVeículo' | 'Settings' | 'Privacy';
+type PageType = 'Home' | 'Serviços' | 'Atividade' | 'Conta' | 'DetalhesServiço' | 'DetalhesAtividade' | 'DetalhesVeículo' | 'Settings' | 'Privacy' | 'Map';
 interface SuggestionItem {
     id: number;
     name: string;
     description?: string;
 }
+type LocationType = {
+  title?: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  type?: 'work' | 'home' | 'favorite' | 'searched';
+};
 
 interface ActivityItem {
   id: string;
@@ -42,7 +49,7 @@ interface SuggestionItem {
     title: string;
     src: string;
     name: string;
-    image: string;
+    image: string | any;
 }
   
   interface ActivityItem {
@@ -80,4 +87,4 @@ interface SuggestionItem {
   }
   
 
-export type { TabType, PageType, SuggestionItem, ActivityItem, UserData, Vehicle, NavigationButtonProps, ServiceItem };
+export type { TabType, PageType, SuggestionItem, ActivityItem, UserData, Vehicle, NavigationButtonProps, ServiceItem, LocationType };

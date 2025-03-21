@@ -25,6 +25,7 @@ import { ActivityProvider } from './src/context/ActivityContext';
 import SettingsScreen from './src/pages/SettingsScreen';
 import { ThemeProvider } from './src/context/ThemeContext';
 import PrivacyPolicyScreen from './src/pages/PrivacyScreen';
+import MapScreen from './src/pages/MapScreen';
 
 
 // Configurações de tema
@@ -89,7 +90,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
    // Quando o botão é pressionado
    const handlePressIn = () => {
     Animated.spring(animatedTranslateX, {
-      toValue: 10,     // encolhe um pouco
+      toValue: -5,     // encolhe um pouco
       useNativeDriver: true,
     }).start();
   };
@@ -97,9 +98,9 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
   // Quando o botão é solto
   const handlePressOut = () => {
     Animated.spring(animatedTranslateX, {
-      toValue: 1,        // volta ao tamanho normal
-      friction: 5,
-      tension: 100,
+      toValue: 0,        // volta ao tamanho normal
+      friction: 7,
+      tension: 70,
       useNativeDriver: true,
     }).start();
   };
@@ -443,6 +444,7 @@ export default function App() {
       setHistory(newHistory);
       await saveHistory(newHistory);
       setSearchText('');
+      setActivePage('Map');
     }
   };
 
@@ -539,7 +541,9 @@ export default function App() {
             />
           ) : activePage === 'Privacy' ?(
             <PrivacyPolicyScreen/>
-          ) : (
+          ) : activePage === 'Map' ?(
+            <MapScreen route={{ key: 'map', name: 'params', params: { /* add necessary route params here */ } }} />
+          ): (
             <View style={styles.otherPages}>
               <Text style={{ color: colors.text }}>{activePage} Page</Text>
             </View>
@@ -774,7 +778,6 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
-  // No seu arquivo de estilos
   emptyButton: {
     backgroundColor: colorSchemes[theme].primary,
     borderRadius: 25,
@@ -1012,5 +1015,26 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   detailActionButtonText: {
     fontSize: scale(16),
     fontWeight: '600',
+  },
+  mapContainer: {
+    flex: 1,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+  searchBox: {
+    position: 'absolute',
+    top: 20,
+    width: '90%',
+    alignSelf: 'center',
+    backgroundColor: colorSchemes[theme].card,
+    borderRadius: 8,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });

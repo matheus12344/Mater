@@ -6,7 +6,6 @@ import {
   TouchableOpacity, 
   View, 
   Dimensions, 
-  FlatList, 
   Image, 
   Appearance,
   SafeAreaView,
@@ -23,8 +22,9 @@ import ServicesScreen from './src/pages/ServicesScreen';
 import ServiceDetailScreen from './src/pages/ServiceDetailScreen';
 import ActivityDetailScreen from './src/pages/ActivityDetailScreen';
 import { ActivityProvider } from './src/context/ActivityContext';
-import { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import SettingsScreen from './src/pages/SettingsScreen';
+import { ThemeProvider } from './src/context/ThemeContext';
+import PrivacyPolicyScreen from './src/pages/PrivacyScreen';
 
 
 // Configurações de tema
@@ -466,117 +466,121 @@ export default function App() {
   );
 
   return (
-    <ActivityProvider>
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor= {colors.background} />
+    <ThemeProvider>
+      <ActivityProvider>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor= {colors.background} />
 
-        {activePage === 'Home' ? (
-          <HomeTabContent
-          selectedTab={selectedTab}
-          setSelectedTab={setSelectedTab}
-          styles={styles}
-          colors={colors}
-          scale={scale}
-          searchText={searchText}
-          setSearchText={setSearchText}
-          handleSearch={handleSearch}
-          history={history}
-          renderItem={renderItem}
-          suggestions={suggestions}
-          renderSuggestion={renderSuggestion}
-        />
-        ) : activePage === 'Serviços' ?(
-          <ServicesScreen
-            services={services}
-            handleServiceSelect={handleServiceSelect}
+          {activePage === 'Home' ? (
+            <HomeTabContent
+            selectedTab={selectedTab}
+            setSelectedTab={setSelectedTab}
             styles={styles}
             colors={colors}
             scale={scale}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            handleSearch={handleSearch}
+            history={history}
+            renderItem={renderItem}
+            suggestions={suggestions}
+            renderSuggestion={renderSuggestion}
           />
-        ) : activePage === 'Atividade' ?(
-            <ActivityScreen
-              activities={activities}
-              renderActivityItem={renderActivityItem}
+          ) : activePage === 'Serviços' ?(
+            <ServicesScreen
+              services={services}
+              handleServiceSelect={handleServiceSelect}
               styles={styles}
               colors={colors}
-              handleActivityPress={handleActivityPress}
+              scale={scale}
             />
-        ) : activePage === 'DetalhesAtividade' && selectedActivity  ?(
-            <ActivityDetailScreen
-              activity={selectedActivity}
-              onBack={handleActivityBack}
+          ) : activePage === 'Atividade' ?(
+              <ActivityScreen
+                activities={activities}
+                renderActivityItem={renderActivityItem}
+                styles={styles}
+                colors={colors}
+                handleActivityPress={handleActivityPress}
+              />
+          ) : activePage === 'DetalhesAtividade' && selectedActivity  ?(
+              <ActivityDetailScreen
+                activity={selectedActivity}
+                onBack={handleActivityBack}
+                styles={styles}
+                colors={colors}
+                scale={(size) => size}
+              />
+          ) : activePage === 'Conta' ?(
+            <AccountScreen
+              userData={userData}
+              setUserData={setUserData}
               styles={styles}
               colors={colors}
-              scale={(size) => size}
+              scale={scale}
+              accountOptions={accountOptions}
+              renderVehicleItem={renderVehicleItem}
+              renderAccountOption={renderAccountOption}
             />
-        ) : activePage === 'Conta' ?(
-          <AccountScreen
-            userData={userData}
-            setUserData={setUserData}
-            styles={styles}
-            colors={colors}
-            scale={scale}
-            accountOptions={accountOptions}
-            renderVehicleItem={renderVehicleItem}
-            renderAccountOption={renderAccountOption}
-          />
-        ) : activePage === 'DetalhesServiço' && selectedService ?(
-          <ServiceDetailScreen
-            service={selectedService}
-            onBack={handleBack}
-            styles={styles}
-            colors={colors}
-            scale={scale}
-            userVehicles={userData.vehicles}
-          />
-        ) : activePage === 'Settings' ?(
-          <SettingsScreen 
-            styles={styles} 
-            colors={colors} 
-            scale={scale} 
-          />
-        ) : (
-          <View style={styles.otherPages}>
-            <Text style={{ color: colors.text }}>{activePage} Page</Text>
+          ) : activePage === 'DetalhesServiço' && selectedService ?(
+            <ServiceDetailScreen
+              service={selectedService}
+              onBack={handleBack}
+              styles={styles}
+              colors={colors}
+              scale={scale}
+              userVehicles={userData.vehicles}
+            />
+          ) : activePage === 'Settings' ?(
+            <SettingsScreen 
+              styles={styles} 
+              colors={colors} 
+              scale={scale} 
+            />
+          ) : activePage === 'Privacy' ?(
+            <PrivacyPolicyScreen/>
+          ) : (
+            <View style={styles.otherPages}>
+              <Text style={{ color: colors.text }}>{activePage} Page</Text>
+            </View>
+          )}
+
+          <View style={[styles.footer, { borderTopColor: colors.border }]}>
+            <NavigationButton
+              page="Home"
+              label="Home"
+              icon="home"
+              activePage={activePage}
+              theme={theme}
+              onPress={() => setActivePage('Home')}
+            />
+            <NavigationButton
+              page="Serviços"
+              label="Serviços"
+              icon="tools"
+              activePage={activePage}
+              theme={theme}
+              onPress={() => setActivePage('Serviços')}
+            />
+            <NavigationButton
+              page="Atividade"
+              label="Atividade"
+              icon="clipboard-list"
+              activePage={activePage}
+              theme={theme}
+              onPress={() => setActivePage('Atividade')}
+            />
+            <NavigationButton
+              page="Conta"
+              label="Conta"
+              icon="account"
+              activePage={activePage}
+              theme={theme}
+              onPress={() => setActivePage('Conta')}
+            />
           </View>
-        )}
-
-        <View style={[styles.footer, { borderTopColor: colors.border }]}>
-          <NavigationButton
-            page="Home"
-            label="Home"
-            icon="home"
-            activePage={activePage}
-            theme={theme}
-            onPress={() => setActivePage('Home')}
-          />
-          <NavigationButton
-            page="Serviços"
-            label="Serviços"
-            icon="tools"
-            activePage={activePage}
-            theme={theme}
-            onPress={() => setActivePage('Serviços')}
-          />
-          <NavigationButton
-            page="Atividade"
-            label="Atividade"
-            icon="clipboard-list"
-            activePage={activePage}
-            theme={theme}
-            onPress={() => setActivePage('Atividade')}
-          />
-          <NavigationButton
-            page="Conta"
-            label="Conta"
-            icon="account"
-            activePage={activePage}
-            theme={theme}
-            onPress={() => setActivePage('Conta')}
-          />
-        </View>
-      </SafeAreaView>
-    </ActivityProvider>
+        </SafeAreaView>
+      </ActivityProvider>
+    </ThemeProvider>
   );
 }
 

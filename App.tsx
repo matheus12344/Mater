@@ -542,7 +542,7 @@ export default function App() {
           ) : activePage === 'Privacy' ?(
             <PrivacyPolicyScreen/>
           ) : activePage === 'Map' ?(
-            <MapScreen route={{ key: 'map', name: 'params', params: { /* add necessary route params here */ } }} />
+            <MapScreen key="map" route={{ params: { /* add necessary route params here */ } }} />
           ): (
             <View style={styles.otherPages}>
               <Text style={{ color: colors.text }}>{activePage} Page</Text>

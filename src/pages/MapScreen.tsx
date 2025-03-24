@@ -1,183 +1,386 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity, Alert, TextInput } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useTheme } from '../context/ThemeContext';
-import { LocationType } from '../types';
-
-type Location = {
-  latitude: number;
-  longitude: number;
-  address: string;
-  type: string;
-};
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { decode } from '@mapbox/polyline';
+import { LinearGradient } from 'expo-linear-gradient';
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Setting a timer']);
 
+interface RouteParams {
+  params?: {
+    searchText?: string;
+  };
+}
 
-import { RouteProp } from '@react-navigation/native';
-
-type MapScreenRouteProp = RouteProp<{ params: { searchText?: string } }, 'params'>;
-
-const MapScreen = ({ route }: { route: MapScreenRouteProp }) => {
-  const { colors } = useTheme();
-  const [region, setRegion] = useState<{
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
-  }>({
-    latitude: 37.78825,
-    longitude: -122.4324,
+const MapScreen = ({ route }: { route: RouteParams }) => {
+  const { colors, theme } = useTheme();
+  const mapRef = useRef<MapView>(null);
+  const [region, setRegion] = useState({
+    latitude: 0,
+    longitude: 0,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchedLocation, setSearchedLocation] = useState<Location | null>(null);
-  const [mapReady, setMapReady] = useState(false);
-  const [locations, setLocations] = useState<LocationType[]>([
-    {
-      title: "Work",
-      address: "1500 Market Street",
-      latitude: 37.79027,
-      longitude: -122.40042,
-      type: "work"
-    },
-    {
-      title: "1500 Michigan Street",
-      address: "San Francisco",
-      latitude: 37.78467,
-      longitude: -122.40642,
-      type: "home"
-    }
-  ]);
+  const [routeCoordinates, setRouteCoordinates] = useState<Array<{ latitude: number; longitude: number }>>([]);
+  const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const hasRestored = useRef(false);
+  const previousSearchText = useRef<string | null>(null);
+  const [lastValidRoute, setLastValidRoute] = useState<Array<{ latitude: number; longitude: number }>>([]);
 
   useEffect(() => {
-    if (route.params?.searchText) {
-        handleSearch(route.params.searchText);
+    if (!hasRestored.current && 
+        routeCoordinates.length === 0 && 
+        lastValidRoute.length > 0) {
+      setRouteCoordinates(lastValidRoute);
+      hasRestored.current = true;
+    }
+  }, [routeCoordinates, lastValidRoute]);
+
+  // Obter localização do usuário
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Ative a localização nas configurações');
+        return;
       }
-    }, [route.params]);
 
-    const handleSearch = async (query: string) => {
-        try {
-          const results = await Location.geocodeAsync(query);
-          
-          if (results.length > 0) {
-            const { latitude, longitude } = results[0];
-            const newLocation: Location = {
-              address: query,
-              latitude,
-              longitude,
-              type: 'searched'
-            };
-    
-            setSearchedLocation(newLocation);
-            setRegion({
-              latitude,
-              longitude,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            });
-            setSearchQuery(query);
-          } else {
-            Alert.alert('Local não encontrado', 'Não foi possível encontrar o endereço informado');
-          }
-        } catch (error) {
-          Alert.alert('Erro', 'Ocorreu um erro ao buscar o local');
-        }
+      let location = await Location.getCurrentPositionAsync({});
+      const newRegion = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
       };
+      setCurrentLocation(newRegion);
+      setRegion(newRegion);
+    })();
+  }, []);
 
-  const styles = createStyles('light'); // or 'dark' based on your theme
+  // Geocodificação usando Nominatim (OpenStreetMap)
+  const geocodeAddress = async (address: string) => {
+    try {
+      const formattedAddress = encodeURIComponent(address.trim());
+      const url = `https://nominatim.openstreetmap.org/search?q=${formattedAddress}&format=json&addressdetails=1&limit=1`;
+      
+      console.log('URL Geocoding:', url); // Debug
+  
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'MyAwesomeApp/1.0 (contact@myapp.com)',
+          'Accept-Language': 'pt-BR,pt;q=0.9',
+        },
+        timeout: 10000,
+      });
+  
+      console.log('Resposta Geocoding:', response.data); // Debug
+  
+      if (!response.data?.length) {
+        Alert.alert('😕 Endereço não encontrado', 'Verifique a ortografia ou tente um endereço mais completo');
+        return null;
+      }
+  
+      const bestMatch = response.data[0];
+      return {
+        latitude: Number(bestMatch.lat), // Use Number() ao invés de parseFloat()
+        longitude: Number(bestMatch.lon)
+      };
+    } catch (error) {
+      console.error('Erro completo:', error);
+      Alert.alert('🌐 Erro de conexão', 'Verifique sua internet e tente novamente');
+      return null;
+    }
+  };
+
+  // Calcular rota usando OSRM
+  const calculateRoute = async (start: { latitude: number; longitude: number }, end: { latitude: number; longitude: number }) => {
+    try {
+      const response = await axios.get(
+        `https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}`,
+        {
+          params: {
+            overview: 'full',
+            geometries: 'geojson',
+            alternatives: 'false',
+            steps: 'false'
+          },
+          timeout: 10000
+        }
+      );
+  
+      if (response.data?.code !== 'Ok' || !response.data?.routes?.[0]?.geometry) {
+        console.error('Resposta inválida:', response.data);
+        return [];
+      }
+  
+      // Acessa diretamente as coordenadas do GeoJSON
+      const coordinates = response.data.routes[0].geometry.coordinates;
+      
+      if (!coordinates.length) {
+        console.error('Coordenadas vazias:', coordinates);
+        return [];
+      }
+  
+      // Converte [lon, lat] para {latitude, longitude}
+      return coordinates.map(([lon, lat]: [number, number]) => ({
+        latitude: lat,
+        longitude: lon
+      }));
+  
+    } catch (error) {
+      console.error('Erro completo:', error);
+      return [];
+    }
+  };
+
+  // Função auxiliar de validação
+  const isValidCoordinate = (coord: { latitude: number; longitude: number }) => {
+    return (
+      typeof coord.latitude === 'number' &&
+      typeof coord.longitude === 'number' &&
+      Math.abs(coord.latitude) <= 90 &&
+      Math.abs(coord.longitude) <= 180
+    );
+  };
+
+  // Adicione este useEffect para debug
+  useEffect(() => {
+    console.log('Estado atual:', {
+      currentLocation,
+      destination,
+      routeCoordinates: routeCoordinates.slice(0, 3)
+    });
+  }, [currentLocation, destination, routeCoordinates]);
+
+  useEffect(() => {
+    if (routeCoordinates.length === 0 && lastValidRoute.length > 0) {
+      if (!hasRestored.current) {
+        setRouteCoordinates(lastValidRoute);
+        hasRestored.current = true;
+      }
+    }
+  }, [routeCoordinates, lastValidRoute]);
+
+  useEffect(() => {
+    const currentSearchText = route.params?.searchText;
+    
+    if (currentSearchText && currentSearchText !== previousSearchText.current) {
+      handleSearch(currentSearchText);
+      previousSearchText.current = currentSearchText;
+    }
+  }, [route.params?.searchText]);
+
+  // Handler de busca
+  const handleSearch = async (query: string) => {
+    if (!query || query === previousSearchText.current) return;
+    
+    setLoading(true);
+    try {
+      const destinationCoords = await geocodeAddress(query);
+      
+      if (!destinationCoords || !currentLocation) {
+        setRouteCoordinates([]);
+        setDestination(null);
+        return;
+      }
+  
+      const route = await calculateRoute(currentLocation, destinationCoords);
+      
+      if (route.length > 0) {
+        setDestination(destinationCoords);
+        setRouteCoordinates(route);
+        
+        // Atualiza a região do mapa
+        mapRef.current?.fitToCoordinates(route, {
+          edgePadding: { top: 100, right: 50, bottom: 150, left: 50 },
+          animated: true,
+        });
+      } else {
+        Alert.alert('Rota não encontrada', 'Não foi possível traçar o caminho');
+      }
+      
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <MapView
-        style={styles.map}
+        ref={mapRef}
+        style={[styles.map, StyleSheet.absoluteFillObject]}
         region={region}
-        showsUserLocation={true}
-        onMapReady={() => setMapReady(true)}
+        showsUserLocation={false}
+        showsMyLocationButton={false}
+        onMapReady={() => console.log('Mapa pronto')}
       >
-        {/* Marcadores fixos */}
-        {locations.map((loc, index) => (
-          <Marker
-            key={`fixed-${index}`}
-            coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
-            title={loc.title}
-            description={loc.address}
-            pinColor={loc.type === 'work' ? colors.primary : '#4CAF50'}
-          />
-        ))}
+        {/* Marcador de localização atual */}
+        {currentLocation && (
+          <Marker coordinate={currentLocation}>
+            <View style={[styles.markerCurrent, { backgroundColor: colors.primary }]}>
+              <Ionicons name="navigate" size={20} color="blue" />
+            </View>
+          </Marker>
+        )}
 
-        {/* Marcador da busca */}
-        {searchedLocation && (
-          <Marker
-            coordinate={{
-              latitude: searchedLocation.latitude,
-              longitude: searchedLocation.longitude
-            }}
-            title="Local Pesquisado"
-            description={searchQuery}
-            pinColor="#FF6B6B"
+        {/* Marcador de destino */}
+        {destination && isValidCoordinate(destination) && (
+          <Marker coordinate={destination}>
+            <View style={styles.markerDestination}>
+              <Ionicons name="flag" size={24} color="white" />
+            </View>
+          </Marker>
+        )}
+
+        {/* Linha da rota */}
+        {routeCoordinates.length > 0 && isValidCoordinate(routeCoordinates[0]) && (
+          <Polyline
+            zIndex={999} // Garante que a rota fique acima de outros elementos
+            coordinates={routeCoordinates}
+            strokeWidth={4}
+            strokeColor={'#007AFF'}
+            lineDashPattern={[0]}
           />
         )}
       </MapView>
 
-      {/* Barra de pesquisa overlay */}
-      <View style={[styles.searchBox, { backgroundColor: colors.card }]}>
+      {/* Adicione coordenadas de debug */}
+      {__DEV__ && destination && (
+        <View style={styles.debugContainer}>
+          <Text style={styles.debugText}>
+            Destino: {destination.latitude.toFixed(6)}, {destination.longitude.toFixed(6)}
+          </Text>
+        </View>
+      )}
+
+      {/* Overlay de busca */}
+      <LinearGradient
+        colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.6)']}
+        style={styles.searchContainer}
+      >
         <TextInput
-          style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Digite um endereço"
-          placeholderTextColor={colors.placeholder}
+          style={styles.searchInput}
+          placeholder="Digite o destino..."
+          placeholderTextColor="#666"
           value={searchQuery}
           onChangeText={setSearchQuery}
           onSubmitEditing={() => handleSearch(searchQuery)}
         />
         <TouchableOpacity 
-          style={styles.searchButton}
+          style={[styles.searchButton, { backgroundColor: colors.primary }]}
           onPress={() => handleSearch(searchQuery)}
         >
-          <Ionicons name="search" size={24} color={colors.text} />
+          <Ionicons name="search" size={24} color="black" />
         </TouchableOpacity>
-      </View>
-    </View>
+      </LinearGradient>
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Calculando rota...</Text>
+        </View>
+      )}
+    </SafeAreaView>
   );
 };
 
 const { width, height } = Dimensions.get('window');
 
-const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#f0f3f5',
   },
   map: {
-    width: width,
-    height: height,
+    width,
+    height: '100%',
   },
-    searchBox: {
-        position: 'absolute',
-        top: 40,
-        width: '90%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 25,
-        paddingHorizontal: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    searchInput: {
-        flex: 1,
-        height: 50,
-        fontSize: 16,
-    },
-    searchButton: {
-        marginLeft: 10,
-        padding: 8,
-        borderRadius: 25,
-    },
+  searchContainer: {
+    position: 'absolute',
+    top: 20,
+    width: '90%',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    borderRadius: 30,
+    padding: 5,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  searchInput: {
+    flex: 1,
+    height: 50,
+    paddingHorizontal: 20,
+    fontSize: 16,
+    color: '#333',
+  },
+  searchButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 5,
+  },
+  markerCurrent: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  markerDestination: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ff4757',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    padding: 20,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  debugContainer: {
+    position: 'absolute',
+    bottom: 100,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: 'center',
+  },
+  debugText: {
+    color: 'white',
+    fontSize: 12,
+  },
 });
 
 export default MapScreen;

@@ -11,7 +11,7 @@ type LocationType = {
   address: string;
   latitude: number;
   longitude: number;
-  type?: 'work' | 'home' | 'favorite' | 'searched';
+  type?: 'work' | 'home' | 'favorite' | 'searched' | 'current';
 };
 
 interface ActivityItem {

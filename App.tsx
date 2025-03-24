@@ -149,6 +149,10 @@ export default function App() {
   const [activePage, setActivePage] = useState<PageType>('Home');
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null); // Aqui guardamos qual serviço foi selecionado
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);  // Armazena a atividade selecionada
+  const [mapSearchParams, setMapSearchParams] = useState<{
+    searchText?: string;
+    coordinates?: { latitude: number; longitude: number };
+  }>({});
 
   const services: ServiceItem[] = [
     {
@@ -449,12 +453,12 @@ export default function App() {
   };
 
   const renderItem = ({ item }: { item: string }) => (
-    <TouchableOpacity style={[styles.locationContainer, { backgroundColor: colors.card }]}>
+    <TouchableOpacity style={[styles.locationContainer, { backgroundColor: colors.card }]} onPress={() => setActivePage('Map')}>
       <Ionicons name="time" size={scale(24)} color={colors.text} />
       <View style={styles.locationTextContainer}>
         <Text style={[styles.locationTitle, { color: colors.text }]}>{item}</Text>
         <Text style={[styles.locationAddress, { color: colors.placeholder }]}>
-          Endereço fictício
+          {item}
         </Text>
       </View>
     </TouchableOpacity>

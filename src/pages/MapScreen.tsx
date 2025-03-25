@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text, ScrollView } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useTheme } from '../context/ThemeContext';
@@ -8,15 +8,28 @@ import axios from 'axios';
 import { decode } from '@mapbox/polyline';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LogBox } from 'react-native';
+import { ServiceItem } from 'src/types';
+
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+import { servicePricing } from 'src/config/Pricing';
 LogBox.ignoreLogs(['Setting a timer']);
 
 interface RouteParams {
   params?: {
     searchText?: string;
+    coordinates?: { latitude: number; longitude: number };
   };
 }
 
-const MapScreen = ({ route }: { route: RouteParams }) => {
+interface MapScreenProps {
+  route: RouteParams;
+  services: ServiceItem[];
+}
+
+const MapScreen: React.FC<MapScreenProps> = ({route, services}) => {
   const { colors, theme } = useTheme();
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState({
@@ -33,6 +46,7 @@ const MapScreen = ({ route }: { route: RouteParams }) => {
   const hasRestored = useRef(false);
   const previousSearchText = useRef<string | null>(null);
   const [lastValidRoute, setLastValidRoute] = useState<Array<{ latitude: number; longitude: number }>>([]);
+  const [routeInfo, setRouteInfo] = useState<{ coordinates: Coordinates[]; distance: number } | null>(null);
 
   useEffect(() => {
     if (!hasRestored.current && 
@@ -100,7 +114,7 @@ const MapScreen = ({ route }: { route: RouteParams }) => {
   };
 
   // Calcular rota usando OSRM
-  const calculateRoute = async (start: { latitude: number; longitude: number }, end: { latitude: number; longitude: number }) => {
+  const calculateRoute = async (start: { latitude: number; longitude: number }, end: { latitude: number; longitude: number }): Promise<{ coordinates: { latitude: number; longitude: number }[]; distance: number; duration: number } | null> => {
     try {
       const response = await axios.get(
         `https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}`,
@@ -117,28 +131,41 @@ const MapScreen = ({ route }: { route: RouteParams }) => {
   
       if (response.data?.code !== 'Ok' || !response.data?.routes?.[0]?.geometry) {
         console.error('Resposta inválida:', response.data);
-        return [];
+        return null;
       }
   
       // Acessa diretamente as coordenadas do GeoJSON
       const coordinates = response.data.routes[0].geometry.coordinates;
+
+      
       
       if (!coordinates.length) {
         console.error('Coordenadas vazias:', coordinates);
-        return [];
+        return null;
       }
   
       // Converte [lon, lat] para {latitude, longitude}
-      return coordinates.map(([lon, lat]: [number, number]) => ({
-        latitude: lat,
-        longitude: lon
-      }));
+      return {
+        coordinates: response.data.routes[0].geometry.coordinates.map(([longitude, latitude]: [number, number]) => ({ latitude, longitude })),
+        distance: response.data.routes[0].distance, // Distância em metros
+        duration: response.data.routes[0].duration // Em segundos
+      };
+      
   
     } catch (error) {
       console.error('Erro completo:', error);
-      return [];
+      return null
     }
   };
+
+  // Exibição formatada
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.round((seconds % 3600) / 60);
+    return `${hours}h${minutes}m`;
+  };
+
+  
 
   // Função auxiliar de validação
   const isValidCoordinate = (coord: { latitude: number; longitude: number }) => {
@@ -155,16 +182,18 @@ const MapScreen = ({ route }: { route: RouteParams }) => {
     console.log('Estado atual:', {
       currentLocation,
       destination,
-      routeCoordinates: routeCoordinates.slice(0, 3)
+      routeCoordinates: routeCoordinates.slice(0, 3),
+      services: services?.length // Verifica se services existe
     });
-  }, [currentLocation, destination, routeCoordinates]);
+  }, [currentLocation, destination, routeCoordinates, services]);
 
   useEffect(() => {
-    if (routeCoordinates.length === 0 && lastValidRoute.length > 0) {
-      if (!hasRestored.current) {
-        setRouteCoordinates(lastValidRoute);
-        hasRestored.current = true;
-      }
+      if (!hasRestored.current && 
+        routeCoordinates.length === 0 && 
+        lastValidRoute.length > 0 &&
+        lastValidRoute.every(isValidCoordinate)) {
+      setRouteCoordinates(lastValidRoute);
+      hasRestored.current = true;
     }
   }, [routeCoordinates, lastValidRoute]);
 
@@ -192,13 +221,28 @@ const MapScreen = ({ route }: { route: RouteParams }) => {
       }
   
       const route = await calculateRoute(currentLocation, destinationCoords);
-      
-      if (route.length > 0) {
+
+      if (route) {
+        setRouteInfo({
+          coordinates: route.coordinates,
+          distance: route.distance
+        });
+      }
+
+      if (route && route.coordinates.length > 0) {
         setDestination(destinationCoords);
-        setRouteCoordinates(route);
+        setRouteCoordinates(route.coordinates);
+        setLastValidRoute(route.coordinates);
+
+        setTimeout(() => {
+          mapRef.current?.fitToCoordinates(route.coordinates, {
+            edgePadding: { top: 100, right: 50, bottom: 150, left: 50 },
+            animated: true,
+          });
+        }, 500);
         
         // Atualiza a região do mapa
-        mapRef.current?.fitToCoordinates(route, {
+        mapRef.current?.fitToCoordinates(route.coordinates, {
           edgePadding: { top: 100, right: 50, bottom: 150, left: 50 },
           animated: true,
         });
@@ -209,6 +253,49 @@ const MapScreen = ({ route }: { route: RouteParams }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateServicePrice = (serviceId: string, distance: number) => {
+    const pricing = servicePricing[serviceId];
+    if (!pricing) return 0;
+  
+    // Converta a distância de metros para quilômetros e subtraia os quilômetros mínimos
+    const km = Math.max(distance / 1000 - pricing.minimumKm, 0);
+
+    // Calcule o preço total com base na tarifa base e na distância acima dos quilômetros mínimos
+    return pricing.baseRate + (km * pricing.perKm);
+    
+  };
+  
+  // Componente de visualização de preços
+  const PriceEstimateCard = ({ service, distance }: { service: ServiceItem; distance: number }) => {
+    const { colors } = useTheme();
+    const pricing = servicePricing[service.id];
+    const price = calculateServicePrice(service.id, distance);
+  
+    return (
+      <TouchableOpacity style={[styles.priceCard, { backgroundColor: '#fff' }]}>
+        <View style={styles.serviceHeader}>
+          <Ionicons name={service.icon as any} size={24} color={service.color} />
+          <Text style={[styles.serviceName, { color: colors.text }]}>{service.title}</Text>
+          <Text style={[styles.servicePrice, { color: 'black' }]}>
+            {new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL'
+            }).format(price)}
+          </Text>
+        </View>
+        
+        <View style={styles.priceBreakdown}>
+          <Text style={[styles.priceDetail, { color: colors.placeholder }]}>
+            {pricing.formula}
+          </Text>
+          <Text style={[styles.priceDetail, { color: colors.placeholder }]}>
+            Distância: {(distance / 1000).toFixed(1)}km
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -258,6 +345,20 @@ const MapScreen = ({ route }: { route: RouteParams }) => {
             Destino: {destination.latitude.toFixed(6)}, {destination.longitude.toFixed(6)}
           </Text>
         </View>
+      )}
+
+      {routeInfo && services && (
+        <ScrollView style={styles.pricingContainer}>
+          <Text style={styles.pricingTitle}>Opções de Serviço</Text>
+          {services.map((service: ServiceItem) => (
+            <PriceEstimateCard 
+              key={service.id} 
+              service={service} 
+              distance={routeInfo.distance} 
+            />
+          ))}
+          <View style={{width: 100, marginTop:50}}/>
+        </ScrollView>
       )}
 
       {/* Overlay de busca */}
@@ -381,6 +482,63 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
   },
+  pricingContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    top: '50%'
+  },
+  pricingTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  priceCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3
+  },
+  serviceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8
+  },
+  serviceName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 12,
+    flex: 1
+  },
+  servicePrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#007AFF'
+  },
+  priceBreakdown: {
+    marginTop: 8,
+    borderTopWidth: 1,
+    paddingTop: 8
+  },
+  priceDetail: {
+    fontSize: 14,
+    marginVertical: 2
+  }
 });
 
 export default MapScreen;

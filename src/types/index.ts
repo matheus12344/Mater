@@ -75,6 +75,16 @@ interface SuggestionItem {
     plate: string;
     color: string;
   }
+
+  // Criando interface para o algoritmo de precificação
+  type ServicePricing = {
+    id: string;
+    baseRate: number;
+    perKm: number;
+    minimumKm: number;
+    description: string;
+    formula: string;
+  };
   
   
   interface NavigationButtonProps {
@@ -87,4 +97,4 @@ interface SuggestionItem {
   }
   
 
-export type { TabType, PageType, SuggestionItem, ActivityItem, UserData, Vehicle, NavigationButtonProps, ServiceItem, LocationType };
+export type { TabType, PageType, SuggestionItem, ActivityItem, UserData, Vehicle, NavigationButtonProps, ServiceItem, LocationType, ServicePricing };

@@ -54,6 +54,7 @@ interface SuggestionItem {
     subtitle?: string;
     lat: number; // Added latitude property
     lon: number; // Added longitude property
+    color: string // Added color property
 }
   
   interface ActivityItem {

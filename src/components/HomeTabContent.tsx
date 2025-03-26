@@ -127,7 +127,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
               </Text>
             </View>
             <Text style={[styles.historySubtitle, { color: 'gray', fontSize: scale(12) }]}>
-              Rua de exemplo, 123, 
+              Rua de exemplo, 123, {/* apenas teste de endereço */}
               {item}
             </Text>
           </View>
@@ -408,6 +408,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
             keyExtractor={(item) => item.id.toString()}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.suggestionsList}
+            nestedScrollEnabled
           />
         </>
       }

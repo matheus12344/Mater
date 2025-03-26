@@ -459,11 +459,11 @@ export default function App() {
     };
 
   const suggestions: SuggestionItem[] = [
-    { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg', placeId: 'place1', lat: -23.561684, lon: -46.655981 },
-    { id: 2, name: 'Emergência 24h', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h', image: 'https://example.com/tow-truck2.jpg', placeId: 'place2', lat: -23.561684, lon: -46.655981 },
-    { id: 3, name: 'Carga Pesada', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada', image: 'https://example.com/tow-truck3.jpg', placeId: 'place3', lat: -23.561684, lon: -46.655981 },
-    { id: 4, name: 'Assistência Técnica', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica', image: 'https://example.com/tow-truck4.jpg', placeId: 'place4', lat: -23.561684, lon: -46.655981},
-    { id: 5, name: 'Troca de Pneus', src: 'https://example.com/tow-truck4.jpg', title: 'Troca de Pneus', image: 'https://example.com/tow-truck5.jpg', placeId: 'place5', lat: -23.561684, lon: -46.655981 },
+    { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg', placeId: 'place1', lat: -23.561684, lon: -46.655981, color: '#FF6B6B' },
+    { id: 2, name: 'Emergência 24h', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h', image: 'https://example.com/tow-truck2.jpg', placeId: 'place2', lat: -23.561684, lon: -46.655981, color: '#4ECDC4' },
+    { id: 3, name: 'Carga Pesada', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada', image: 'https://example.com/tow-truck3.jpg', placeId: 'place3', lat: -23.561684, lon: -46.655981, color: '#FF9F43' },
+    { id: 4, name: 'Assistência Técnica', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica', image: 'https://example.com/tow-truck4.jpg', placeId: 'place4', lat: -23.561684, lon: -46.655981, color: '#6C5CE7' },
+    { id: 5, name: 'Troca de Pneus', src: 'https://example.com/tow-truck4.jpg', title: 'Troca de Pneus', image: 'https://example.com/tow-truck5.jpg', placeId: 'place5', lat: -23.561684, lon: -46.655981, color: '#00B894' },
   ];
 
   // Carregar histórico
@@ -762,7 +762,7 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   suggestionTitle: {
     position: 'absolute',
@@ -804,7 +804,7 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     padding: scale(15),
     borderRadius: scale(15),
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -837,7 +837,7 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     borderRadius: scale(12),
     marginBottom: scale(12),
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,

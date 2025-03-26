@@ -10,7 +10,8 @@ import {
   Appearance,
   SafeAreaView,
   Animated,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Vibration
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
@@ -520,6 +521,14 @@ export default function App() {
     </TouchableOpacity>
   );
 
+  const handleDeleteHistoryItem = (index: number) => {
+    const newHistory = history.filter((_, i) => i !== index);
+    setHistory(newHistory);
+    saveHistory(newHistory);
+    Vibration.vibrate(50)
+  };
+  
+
   return (
     <ThemeProvider>
       <ActivityProvider>
@@ -543,6 +552,7 @@ export default function App() {
               onSearchTextChange={handleSearchTextChange}
               onSelectSuggestion={handleSelectSuggestion}
               searchSuggestions={searchSuggestions}
+              onDeleteHistoryItem={handleDeleteHistoryItem}
           />
           ) : activePage === 'Serviços' ?(
             <ServicesScreen
@@ -1140,5 +1150,35 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     padding: 15,
     textAlign: 'center',
     color: '#888'
+  },
+  historyItemContainer: {
+    overflow: 'hidden',
+    marginHorizontal: scale(15),
+    marginVertical: scale(5),
+    borderRadius: scale(8),
+  },
+  deleteContainer: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ff574d',
+    zIndex: 0,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: scale(15),
+    borderRadius: scale(8),
+    zIndex: 1,
+  },
+  historyTextContainer: {
+    marginLeft: scale(15),
+    flex: 1,
+  },
+  historyTitle: {
+    fontSize: scale(16),
   },
 });

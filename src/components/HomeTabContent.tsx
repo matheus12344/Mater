@@ -8,7 +8,8 @@ import {
   Animated,
   TouchableWithoutFeedback,
   StyleSheet,
-  ActivityIndicator
+  ActivityIndicator,
+  PanResponder
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -31,6 +32,7 @@ interface HomeTabContentProps {
   onSearchTextChange: (text: string) => Promise<void>;// Nova prop para buscar sugestões
   onSelectSuggestion: (item: SuggestionItem) => void; // Nova prop para seleção
   searchSuggestions: SuggestionItem[];
+  onDeleteHistoryItem: (index: number) => void; // Nova prop para deletar histórico
 }
 
 const HomeTabContent: React.FC<HomeTabContentProps> = ({
@@ -48,6 +50,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   renderSuggestion,
   onSearchTextChange,
   onSelectSuggestion,
+  onDeleteHistoryItem,
 }) => {
 
   const [showSuggestions, setShowSuggestions] = React.useState(false);
@@ -55,6 +58,91 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   const [localSuggestions, setLocalSuggestions] = React.useState<SuggestionItem[]>([]);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
+  const SwipeableHistoryItem = ({ 
+    item, 
+    index, 
+    onDelete 
+  }: { 
+    item: string; 
+    index: number;
+    onDelete: (index: number) => void 
+  }) => {
+    const swipeX = useRef(new Animated.Value(0)).current;
+    const swipeThreshold = scale(-80); // Largura do swipe para exclusão
+    const itemWidth = scale(300); // Largura aproximada do item
+  
+    const panResponder = useRef(
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          return Math.abs(gestureState.dx) > Math.abs(gestureState.dy * 2);
+        },
+        onPanResponderMove: Animated.event(
+          [null, { dx: swipeX }],
+          { useNativeDriver: false }
+        ),
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dx < swipeThreshold) {
+            Animated.timing(swipeX, {
+              toValue: swipeThreshold,
+              duration: 200,
+              useNativeDriver: true
+            }).start(() => onDelete(index));
+          } else {
+            Animated.spring(swipeX, {
+              toValue: 0,
+              useNativeDriver: true
+            }).start();
+          }
+        }
+      })
+    ).current;
+  
+    return (
+      <View style={styles.historyItemContainer}>
+        {/* Background de Exclusão */}
+        <View style={[styles.deleteContainer, { width: -swipeThreshold }]}>
+          <Ionicons name="trash" size={scale(20)} color="white" />
+        </View>
+  
+        {/* Item do Histórico com Gestos */}
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.historyItem,
+            { 
+              backgroundColor: colors.card,
+              transform: [{ translateX: swipeX }] 
+            }
+          ]}
+        >
+          <Ionicons name="time" size={scale(20)} color={colors.text} />
+          <View style={[styles.historyTextContainer]}>
+            <View style={{flexDirection: 'row' }}>
+              <Text style={[styles.historyTitle, { color: colors.text, fontWeight: 'bold' }]}>
+                {item}
+              </Text>
+              <Text style={[styles.historySubtitle, { color: colors.text, marginLeft: scale(150), fontSize: scale(12), top: scale(2) }]}>
+                10 min atrás
+              </Text>
+            </View>
+            <Text style={[styles.historySubtitle, { color: 'gray', fontSize: scale(12) }]}>
+              Rua de exemplo, 123, 
+              {item}
+            </Text>
+          </View>
+        </Animated.View>
+      </View>
+    );
+  };
+
+  const renderHistoryItem = ({ item, index }: { item: string; index: number }) => (
+    <SwipeableHistoryItem
+      item={item}
+      index={index}
+      onDelete={onDeleteHistoryItem}
+    />
+  );
 
   const fetchOSMSuggestions = async (searchText: string): Promise<SuggestionItem[]> => {
     try {
@@ -147,26 +235,6 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
 
     console.log('Selecionado:', item);
   };
-
-  const renderSuggestionDropdown = ({ item }: { item: SuggestionItem }) => (
-    <TouchableOpacity
-      style={styles.suggestionItem}
-      onPress={() => handleSelectSuggestion(item)}
-    >
-      <Ionicons name="location-sharp" size={20} color={colors.primary} />
-      <View style={styles.suggestionTextContainer}>
-        <Text style={[styles.suggestionTitle, { color: colors.text }]}>
-          {item.title}
-        </Text>
-        {item.subtitle && (
-          <Text style={[styles.suggestionSubtitle, { color: colors.placeholder }]}>
-            {item.subtitle}
-          </Text>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-  
 
     const renderTabButton = (tab: string) => {
         const animatedScale = useRef(new Animated.Value(1)).current;
@@ -320,7 +388,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
           </Text>
           <FlatList
             data={history}
-            renderItem={renderItem}
+            renderItem={renderHistoryItem}
             keyExtractor={(item, index) => index.toString()}
             scrollEnabled={false}
           />
@@ -348,24 +416,5 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
     />
   );
 };
-
-const suggestionStyles = StyleSheet.create({
-  dropdown: {
-    position: 'absolute',
-    top: 55, // Ajuste conforme layout
-    left: 15,
-    right: 15,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 3,
-    maxHeight: 200,
-    zIndex: 1000,
-  },
-  item: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  }
-});
 
 export default HomeTabContent;

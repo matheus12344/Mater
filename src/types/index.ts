@@ -50,6 +50,10 @@ interface SuggestionItem {
     src: string;
     name: string;
     image: string | any;
+    placeId: string;
+    subtitle?: string;
+    lat: number; // Added latitude property
+    lon: number; // Added longitude property
 }
   
   interface ActivityItem {

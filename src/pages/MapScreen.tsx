@@ -348,7 +348,7 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services}) => {
       )}
 
       {routeInfo && services && (
-        <ScrollView style={styles.pricingContainer}>
+        <ScrollView style={styles.pricingContainer} showsVerticalScrollIndicator={false}>
           <Text style={styles.pricingTitle}>Opções de Serviço</Text>
           {services.map((service: ServiceItem) => (
             <PriceEstimateCard 
@@ -384,7 +384,7 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services}) => {
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={"#333"} />
           <Text style={styles.loadingText}>Calculando rota...</Text>
         </View>
       )}
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginLeft: 10,
     fontSize: 16,
-    color: '#333',
+    color: 'black',
   },
   debugContainer: {
     position: 'absolute',
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#fff',
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,

@@ -154,6 +154,8 @@ export default function App() {
     coordinates?: { latitude: number; longitude: number };
   }>({});
 
+  const [searchSuggestions, setSearchSuggestions] = useState<SuggestionItem[]>([]);
+
   const services: ServiceItem[] = [
     {
       id: '1',
@@ -267,6 +269,61 @@ export default function App() {
       },
     ],
   });
+
+  const fetchOSMSuggestions = async (searchText: string): Promise<SuggestionItem[]> => {
+    try {
+      const url = new URL('https://nominatim.openstreetmap.org/search');
+      url.searchParams.append('format', 'json');
+      url.searchParams.append('q', searchText);
+      url.searchParams.append('addressdetails', '1');
+      url.searchParams.append('countrycodes', 'br');
+      url.searchParams.append('limit', '5');
+      url.searchParams.append('email', 'matheushgevangelista@gmail.com'); // Adicione seu email
+  
+      const response = await fetch(url.toString(), {
+        headers: {
+          'User-Agent': 'Mater/1.0 (matheushgevangelista@gmail.com)', // Obrigatório
+          'Accept-Language': 'pt-BR,pt;q=0.9',
+        },
+      });
+  
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Erro HTTP: ${response.status} - ${text}`);
+      }
+  
+      const data = await response.json();
+      
+      return data.map((item: any) => ({
+        id: item.place_id,
+        title: item.display_name,
+        subtitle: [
+          item.address?.road,
+          item.address?.suburb,
+          item.address?.city,
+          item.address?.state
+        ].filter(Boolean).join(', '),
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon),
+        type: item.type
+      }));
+    } catch (error) {
+      console.error('Erro detalhado:', error);
+      return [];
+    }
+  };
+
+  const handleSelectSuggestion = async (item: SuggestionItem) => {
+    setSearchText(item.subtitle || item.title);
+    setMapSearchParams({
+      searchText: item.subtitle || item.title,
+      coordinates: {
+        latitude: item.lat,
+        longitude: item.lon
+      }
+    });
+    setActivePage('Map');
+  };
 
   const accountOptions = [
     { id: '1', icon: 'settings', title: 'Configurações', screen: 'Settings' },
@@ -382,20 +439,11 @@ export default function App() {
     console.log('Atividade selecionada:', activity);
   };
 
-  const renderServiceItem = ({item}: {item: ServiceItem}) => (
-    <TouchableOpacity 
-      style={[styles.serviceCard, {backgroundColor: colors.card}]}
-      onPress={() => handleServiceSelect(item)}
-    >
-      <View style={[styles.serviceIconContainer, {backgroundColor: item.color + '20'}]}>
-        <Ionicons name={item.icon as any} size={scale(28)} color={item.color} />
-      </View>
-      <Text style={[styles.serviceTitle, {color: colors.text}]}>{item.title}</Text>
-      <Text style={[styles.serviceDescription, {color: colors.placeholder}]}>
-        {item.description}
-      </Text>
-    </TouchableOpacity>
-  );
+  const handleSearchTextChange = async (text: string) => {
+    const results = await fetchOSMSuggestions(text);
+    setSearchSuggestions(results);
+    console.log('Resultados de busca:', results);
+  };
   
   const handleServiceSelect = (service: ServiceItem) => {
     // Lógica para seleção de serviço
@@ -410,11 +458,11 @@ export default function App() {
     };
 
   const suggestions: SuggestionItem[] = [
-    { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg'},
-    { id: 2, name: 'Emergência 24h', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h', image: 'https://example.com/tow-truck2.jpg'},
-    { id: 3, name: 'Carga Pesada', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada', image: 'https://example.com/tow-truck3.jpg'},
-    { id: 4, name: 'Assistência Técnica', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica', image: 'https://example.com/tow-truck4.jpg'},
-    { id: 5, name: 'Troca de Pneus', src: 'https://example.com/tow-truck4.jpg', title: 'Troca de Pneus', image: 'https://example.com/tow-truck5.jpg'},
+    { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg', placeId: 'place1', lat: -23.561684, lon: -46.655981 },
+    { id: 2, name: 'Emergência 24h', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h', image: 'https://example.com/tow-truck2.jpg', placeId: 'place2', lat: -23.561684, lon: -46.655981 },
+    { id: 3, name: 'Carga Pesada', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada', image: 'https://example.com/tow-truck3.jpg', placeId: 'place3', lat: -23.561684, lon: -46.655981 },
+    { id: 4, name: 'Assistência Técnica', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica', image: 'https://example.com/tow-truck4.jpg', placeId: 'place4', lat: -23.561684, lon: -46.655981},
+    { id: 5, name: 'Troca de Pneus', src: 'https://example.com/tow-truck4.jpg', title: 'Troca de Pneus', image: 'https://example.com/tow-truck5.jpg', placeId: 'place5', lat: -23.561684, lon: -46.655981 },
   ];
 
   // Carregar histórico
@@ -480,18 +528,21 @@ export default function App() {
 
           {activePage === 'Home' ? (
             <HomeTabContent
-            selectedTab={selectedTab}
-            setSelectedTab={setSelectedTab}
-            styles={styles}
-            colors={colors}
-            scale={scale}
-            searchText={searchText}
-            setSearchText={setSearchText}
-            handleSearch={handleSearch}
-            history={history}
-            renderItem={renderItem}
-            suggestions={suggestions}
-            renderSuggestion={renderSuggestion}
+              selectedTab={selectedTab}
+              setSelectedTab={setSelectedTab}
+              styles={styles}
+              colors={colors}
+              scale={scale}
+              searchText={searchText}
+              setSearchText={setSearchText}
+              handleSearch={handleSearch}
+              history={history}
+              renderItem={renderItem}
+              suggestions={suggestions}
+              renderSuggestion={renderSuggestion}
+              onSearchTextChange={handleSearchTextChange}
+              onSelectSuggestion={handleSelectSuggestion}
+              searchSuggestions={searchSuggestions}
           />
           ) : activePage === 'Serviços' ?(
             <ServicesScreen
@@ -1048,5 +1099,46 @@ const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  suggestionsDropdown: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    borderRadius: 8,
+    elevation: 5,
+    maxHeight: 200,
+    zIndex: 1000,
+    marginTop: 10,
+    padding: 0,
+    backgroundColor: colorSchemes[theme].card,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  suggestionTextContainer: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  suggestionTitleDropdown: {
+    fontSize: 16,
+  },
+  suggestionSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    justifyContent: 'center'
+  },
+  noResults: {
+    padding: 15,
+    textAlign: 'center',
+    color: '#888'
   },
 });

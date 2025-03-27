@@ -1,6 +1,6 @@
 // Tipos e interfaces
 type TabType = 'Viagem' | 'Serviços';
-type PageType = 'Home' | 'Serviços' | 'Atividade' | 'Conta' | 'DetalhesServiço' | 'DetalhesAtividade' | 'DetalhesVeículo' | 'Settings' | 'Privacy' | 'Map';
+type PageType = 'Home' | 'Serviços' | 'Atividade' | 'Conta' | 'DetalhesServiço' | 'DetalhesAtividade' | 'DetalhesVeículo' | 'Settings' | 'Privacy' | 'Map'| 'Payment';
 interface SuggestionItem {
     id: number;
     name: string;
@@ -90,6 +90,27 @@ interface SuggestionItem {
     description: string;
     formula: string;
   };
+
+  type Coordinates = {
+    latitude: number;
+    longitude: number;
+  };
+
+  //Criando a interface para navegação
+  type RootStackParamList = {
+    Map: { route: string; services: any }; 
+    Payment: {
+      service: string;
+      amount: number;
+      serviceDetails: {
+        pickup: Coordinates;
+        destination: Coordinates;
+        distance: number;
+        coordinates: Coordinates[];
+        vehicleType: string;
+      };
+    };
+  };
   
   
   interface NavigationButtonProps {
@@ -102,4 +123,4 @@ interface SuggestionItem {
   }
   
 
-export type { TabType, PageType, SuggestionItem, ActivityItem, UserData, Vehicle, NavigationButtonProps, ServiceItem, LocationType, ServicePricing };
+export type { TabType, PageType, SuggestionItem, ActivityItem, UserData, Vehicle, NavigationButtonProps, ServiceItem, LocationType, ServicePricing, RootStackParamList };

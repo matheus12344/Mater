@@ -274,7 +274,7 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services}) => {
     const price = calculateServicePrice(service.id, distance);
   
     return (
-      <TouchableOpacity style={[styles.priceCard, { backgroundColor: '#fff' }]}>
+      <TouchableOpacity style={[styles.priceCard, { backgroundColor: '#fff' }]} onPress={() => console.log('Selecionado:', service)}>
         <View style={styles.serviceHeader}>
           <Ionicons name={service.icon as any} size={24} color={service.color} />
           <Text style={[styles.serviceName, { color: colors.text }]}>{service.title}</Text>

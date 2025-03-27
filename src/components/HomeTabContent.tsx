@@ -479,7 +479,6 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
 const MapStyles = StyleSheet.create({
   mapContainer: {
     width: '90%',
-    marginVertical: scale(10),
     borderRadius: 10,
     overflow: 'hidden',
     alignSelf: 'center',
@@ -492,10 +491,5 @@ const MapStyles = StyleSheet.create({
 
 export default HomeTabContent;
 
-function scale(size: number): number {
-  const guidelineBaseWidth = 375; // Base width for scaling (e.g., iPhone X width)
-  const screenWidth = Math.min(window.innerWidth, window.innerHeight); // Get the smaller dimension
-  return (size / guidelineBaseWidth) * screenWidth;
-}
 
 

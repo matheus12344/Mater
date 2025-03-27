@@ -27,6 +27,8 @@ import SettingsScreen from './src/pages/SettingsScreen';
 import { ThemeProvider } from './src/context/ThemeContext';
 import PrivacyPolicyScreen from './src/pages/PrivacyScreen';
 import MapScreen from './src/pages/MapScreen';
+import 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
 
 
 // Configurações de tema
@@ -341,14 +343,14 @@ export default function App() {
   };
 
   const renderVehicleItem = ({item}: {item: Vehicle}) => (
-    <View style={[styles.vehicleCard, {backgroundColor: colors.card}]}>
+    <TouchableOpacity style={[styles.vehicleCard, {backgroundColor: colors.card}]}>
       <View style={[styles.vehicleColor, {backgroundColor: item.color}]} />
       <View style={styles.vehicleInfo}>
         <Text style={[styles.vehicleModel, {color: colors.text}]}>{item.model}</Text>
         <Text style={[styles.vehiclePlate, {color: colors.placeholder}]}>{item.plate}</Text>
       </View>
       <Ionicons name="chevron-forward" size={scale(20)} color={colors.placeholder} />
-    </View>
+    </TouchableOpacity>
   );
 
   const renderAccountOption = ({item}: {item: typeof accountOptions[0]}) => (

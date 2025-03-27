@@ -15,6 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 import type { TabType, SuggestionItem } from '../types/index'; 
 
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
+
 // Defina a interface das props que este componente precisa receber
 interface HomeTabContentProps {
   selectedTab: TabType;
@@ -57,6 +60,23 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   const [isLoading, setIsLoading] = React.useState(false);
   const [localSuggestions, setLocalSuggestions] = React.useState<SuggestionItem[]>([]);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const [currentLocation, setCurrentLocation] = React.useState<{ latitude: number; longitude: number }| null>(null);
+
+  React.useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.error('Permissão de localização negada');
+        return;
+      }
+  
+      let location = await Location.getCurrentPositionAsync({});
+      setCurrentLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
 
   const SwipeableHistoryItem = ({ 
     item, 
@@ -122,7 +142,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
               <Text style={[styles.historyTitle, { color: colors.text, fontWeight: 'bold' }]}>
                 {item}
               </Text>
-              <Text style={[styles.historySubtitle, { color: colors.text, marginLeft: scale(150), fontSize: scale(12), top: scale(2) }]}>
+              <Text style={[styles.historySubtitle, { color: colors.text, marginLeft: scale(200), fontSize: scale(12), top: scale(2), position: 'absolute' }]}>
                 10 min atrás
               </Text>
             </View>
@@ -382,6 +402,28 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
             </View>
           )}
 
+          {/* Mapa */}
+          <View style={[MapStyles.mapContainer, { height: scale(200), backgroundColor: colors.card, shadowRadius: 5, shadowColor: colors.border, shadowOpacity: 0.5, shadowOffset: { width: 0, height: 2 }, elevation: 5 }]}>
+                {currentLocation && (
+                  <MapView
+                    style={MapStyles.map}
+                    initialRegion={{
+                      latitude: currentLocation.latitude,
+                      longitude: currentLocation.longitude,
+                      latitudeDelta: 0.0922,
+                      longitudeDelta: 0.0421,
+                    }}
+                  >
+                    <Marker
+                      coordinate={currentLocation}
+                      title="Você está aqui"
+                      description="Sua localização atual"
+                      pinColor={colors.primary}
+                    />
+                  </MapView>
+                )}
+          </View>
+
           {/* Histórico */}
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Histórico
@@ -418,4 +460,26 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   );
 };
 
+const MapStyles = StyleSheet.create({
+  mapContainer: {
+    width: '90%',
+    marginVertical: scale(10),
+    borderRadius: 10,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    marginTop: 20,
+  },
+  map: {
+    flex: 1,
+  }
+})
+
 export default HomeTabContent;
+
+function scale(size: number): number {
+  const guidelineBaseWidth = 375; // Base width for scaling (e.g., iPhone X width)
+  const screenWidth = Math.min(window.innerWidth, window.innerHeight); // Get the smaller dimension
+  return (size / guidelineBaseWidth) * screenWidth;
+}
+
+

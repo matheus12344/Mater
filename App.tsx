@@ -457,6 +457,9 @@ export default function App() {
     const handleBack = () => {
       setActivePage('Serviços');
     };
+    const handleMap = () => {
+      setActivePage('Map');
+    };
 
   const suggestions: SuggestionItem[] = [
     { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg', placeId: 'place1', lat: -23.561684, lon: -46.655981, color: '#FF6B6B' },
@@ -553,6 +556,7 @@ export default function App() {
               onSelectSuggestion={handleSelectSuggestion}
               searchSuggestions={searchSuggestions}
               onDeleteHistoryItem={handleDeleteHistoryItem}
+              onMap={handleMap}
           />
           ) : activePage === 'Serviços' ?(
             <ServicesScreen

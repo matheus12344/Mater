@@ -36,6 +36,8 @@ interface HomeTabContentProps {
   onSelectSuggestion: (item: SuggestionItem) => void; // Nova prop para seleção
   searchSuggestions: SuggestionItem[];
   onDeleteHistoryItem: (index: number) => void; // Nova prop para deletar histórico
+  onMap: (index: number) => void; // Nova prop para deletar histórico
+
 }
 
 const HomeTabContent: React.FC<HomeTabContentProps> = ({
@@ -54,6 +56,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   onSearchTextChange,
   onSelectSuggestion,
   onDeleteHistoryItem,
+  onMap
 }) => {
 
   const [showSuggestions, setShowSuggestions] = React.useState(false);
@@ -403,7 +406,20 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
           )}
 
           {/* Mapa */}
-          <View style={[MapStyles.mapContainer, { height: scale(200), backgroundColor: colors.card, shadowRadius: 5, shadowColor: colors.border, shadowOpacity: 0.5, shadowOffset: { width: 0, height: 2 }, elevation: 5 }]}>
+          <TouchableOpacity
+            style={[MapStyles.mapContainer, { 
+              height: scale(200), 
+              backgroundColor: colors.card, 
+              shadowRadius: 5, 
+              shadowColor: colors.border, 
+              shadowOpacity: 0.5, 
+              shadowOffset: { width: 0, height: 2 }, 
+              elevation: 5 
+            }]} 
+            onPress={() => onMap(0)}
+            activeOpacity={1}
+            onPressIn={() => console.log('Pressionado')}
+          >
                 {currentLocation && (
                   <MapView
                     style={MapStyles.map}
@@ -422,7 +438,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
                     />
                   </MapView>
                 )}
-          </View>
+          </TouchableOpacity>
 
           {/* Histórico */}
           <Text style={[styles.sectionTitle, { color: colors.text }]}>

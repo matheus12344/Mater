@@ -9,7 +9,8 @@ import {
   TouchableWithoutFeedback,
   StyleSheet,
   ActivityIndicator,
-  PanResponder
+  PanResponder,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -308,171 +309,209 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   };
     
   return (
-    <FlatList
-      data={[]}
-      renderItem={() => null}
-      // ---------------------------------------------
-      // Header da lista (conteúdo principal da Home)
-      ListHeaderComponent={
-        <>
-          {/* Seção de Tabs "Viagem" e "Serviços" */}
-          <View style={styles.header}>
-            {['Viagem', 'Serviços'].map(renderTabButton)}
-          </View>
-
-          {/* Campo de busca */}
-          <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
-            <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Para onde?"
-              placeholderTextColor={colors.placeholder}
-              value={searchText}
-              onChangeText={handleTextChange}
-              onSubmitEditing={handleSearch}
-              onFocus={() => searchText.length > 2 && setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            />
-            <TouchableOpacity
-              style={[styles.searchButton, { backgroundColor: colors.primary }]}
-              onPress={handleSearch}
-              accessibilityLabel="Pesquisar"
-              accessibilityRole="button"
-            >
-              {isLoading ? (
-                <ActivityIndicator color="white" size={scale(20)} />
-              ) : (
-                <Ionicons name="search" size={scale(20)} color="white" />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* Dropdown de sugestões */}
-          {showSuggestions && (
-            <View style={[
-              styles.suggestionsDropdown, 
-              { 
-                backgroundColor: colors.card,
-                top: scale(140), // Usando a função scale
-                marginHorizontal: scale(20)
-              }
-            ]}>
-              {isLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={{ color: colors.text, marginLeft: scale(10) }}>
-                    Buscando...
-                  </Text>
-                </View>
-              ) : localSuggestions.length > 0 ? (
-                <FlatList
-                  data={localSuggestions}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.suggestionItem,
-                        { borderBottomColor: colors.border }
-                      ]}
-                      onPress={() => handleSelectSuggestion(item)}
-                    >
-                      <Ionicons 
-                        name="location-sharp" 
-                        size={scale(20)} 
-                        color={colors.primary} 
-                      />
-                      <View style={styles.suggestionTextContainer}>
-                        {item.subtitle && (
-                          <Text 
-                            style={[
-                              styles.suggestionSubtitle, 
-                              { color: colors.placeholder }
-                            ]}
-                          >
-                            {item.subtitle}
-                          </Text>
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                  keyExtractor={(item) => item.id.toString()}
-                  keyboardShouldPersistTaps="always"
-                  nestedScrollEnabled
-                />
-              ) : (
-                <Text style={[styles.noResults, { color: colors.placeholder }]}>
-                  Nenhum resultado encontrado
-                </Text>
-              )}
+    <View style={{flex: 1}}>
+      {/* FlatList e outros componentes */}
+      <FlatList
+        data={[]}
+        renderItem={() => null}
+        // ---------------------------------------------
+        // Header da lista (conteúdo principal da Home)
+        ListHeaderComponent={
+          <>
+            {/* Seção de Tabs "Viagem" e "Serviços" */}
+            <View style={styles.header}>
+              {['Viagem', 'Serviços'].map(renderTabButton)}
             </View>
-          )}
 
-          {/* Mapa */}
-          <TouchableOpacity
-            style={[MapStyles.mapContainer, { 
-              height: scale(200), 
-              backgroundColor: colors.card, 
-              shadowRadius: 5, 
-              shadowColor: colors.border, 
-              shadowOpacity: 0.5, 
-              shadowOffset: { width: 0, height: 2 }, 
-              elevation: 5 
-            }]} 
-            onPress={() => onMap(0)}
-            activeOpacity={1}
-            onPressIn={() => console.log('Pressionado')}
-          >
-                {currentLocation && (
-                  <MapView
-                    style={MapStyles.map}
-                    initialRegion={{
-                      latitude: currentLocation.latitude,
-                      longitude: currentLocation.longitude,
-                      latitudeDelta: 0.0922,
-                      longitudeDelta: 0.0421,
-                    }}
-                  >
-                    <Marker
-                      coordinate={currentLocation}
-                      title="Você está aqui"
-                      description="Sua localização atual"
-                      pinColor={colors.primary}
-                    />
-                  </MapView>
+            {/* Campo de busca */}
+            <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+              <TextInput
+                style={[styles.searchInput, { color: colors.text }]}
+                placeholder="Para onde?"
+                placeholderTextColor={colors.placeholder}
+                value={searchText}
+                onChangeText={handleTextChange}
+                onSubmitEditing={handleSearch}
+                onFocus={() => searchText.length > 2 && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              />
+              <TouchableOpacity
+                style={[styles.searchButton, { backgroundColor: colors.primary }]}
+                onPress={handleSearch}
+                accessibilityLabel="Pesquisar"
+                accessibilityRole="button"
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="white" size={scale(20)} />
+                ) : (
+                  <Ionicons name="search" size={scale(20)} color="white" />
                 )}
-          </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
 
-          {/* Histórico */}
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Histórico
-          </Text>
-          <FlatList
-            data={history}
-            renderItem={renderHistoryItem}
-            keyExtractor={(item, index) => index.toString()}
-            scrollEnabled={false}
-          />
-        </>
-      }
-      // ---------------------------------------------
-      // Footer da lista (sugestões)
-      ListFooterComponent={
-        <>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Sugestões
-          </Text>
-          <FlatList
-            horizontal
-            data={suggestions}
-            renderItem={renderSuggestion}
-            keyExtractor={(item) => item.id.toString()}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.suggestionsList}
-            nestedScrollEnabled
-          />
-        </>
-      }
-      // ---------------------------------------------
-      contentContainerStyle={styles.contentContainer}
-    />
+            {/* Dropdown de sugestões */}
+            {showSuggestions && (
+              <View style={[
+                styles.suggestionsDropdown, 
+                { 
+                  backgroundColor: colors.card,
+                  top: scale(140), // Usando a função scale
+                  marginHorizontal: scale(20)
+                }
+              ]}>
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={{ color: colors.text, marginLeft: scale(10) }}>
+                      Buscando...
+                    </Text>
+                  </View>
+                ) : localSuggestions.length > 0 ? (
+                  <FlatList
+                    data={localSuggestions}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={[
+                          styles.suggestionItem,
+                          { borderBottomColor: colors.border }
+                        ]}
+                        onPress={() => handleSelectSuggestion(item)}
+                      >
+                        <Ionicons 
+                          name="location-sharp" 
+                          size={scale(20)} 
+                          color={colors.primary} 
+                        />
+                        <View style={styles.suggestionTextContainer}>
+                          {item.subtitle && (
+                            <Text 
+                              style={[
+                                styles.suggestionSubtitle, 
+                                { color: colors.placeholder }
+                              ]}
+                            >
+                              {item.subtitle}
+                            </Text>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    keyExtractor={(item) => item.id.toString()}
+                    keyboardShouldPersistTaps="always"
+                    nestedScrollEnabled
+                  />
+                ) : (
+                  <Text style={[styles.noResults, { color: colors.placeholder }]}>
+                    Nenhum resultado encontrado
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/* Mapa */}
+            <TouchableOpacity
+              style={[MapStyles.mapContainer, { 
+                height: scale(200), 
+                backgroundColor: colors.card, 
+                shadowRadius: 5, 
+                shadowColor: colors.border, 
+                shadowOpacity: 0.5, 
+                shadowOffset: { width: 0, height: 2 }, 
+                elevation: 5 
+              }]} 
+              onPress={() => onMap(0)}
+              activeOpacity={1}
+              onPressIn={() => console.log('Pressionado')}
+            >
+                  {currentLocation && (
+                    <MapView
+                      style={MapStyles.map}
+                      initialRegion={{
+                        latitude: currentLocation.latitude,
+                        longitude: currentLocation.longitude,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421,
+                      }}
+                    >
+                      <Marker
+                        coordinate={currentLocation}
+                        title="Você está aqui"
+                        description="Sua localização atual"
+                        pinColor={colors.primary}
+                      />
+                    </MapView>
+                  )}
+            </TouchableOpacity>
+
+            {/* Histórico */}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Histórico
+            </Text>
+            <FlatList
+              data={history}
+              renderItem={renderHistoryItem}
+              keyExtractor={(item, index) => index.toString()}
+              scrollEnabled={false}
+            />
+          </>
+          
+        }
+        // ---------------------------------------------
+        // Footer da lista (sugestões)
+        ListFooterComponent={
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Sugestões
+            </Text>
+            <FlatList
+              horizontal
+              data={suggestions}
+              renderItem={renderSuggestion}
+              keyExtractor={(item) => item.id.toString()}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.suggestionsList}
+              nestedScrollEnabled
+            />
+          </>
+        }
+        // ---------------------------------------------
+        contentContainerStyle={styles.contentContainer}
+      />
+
+      {/* Botão de pânico (Apenas o conceito por enquanto...) */}
+      <TouchableOpacity 
+        style={{
+            height: 80, 
+            width: 80,
+            borderRadius: 40, 
+            backgroundColor: '#ff6666', 
+            position: 'absolute', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            top: 600,
+            left: 295,
+            zIndex: 10,
+          }}
+        onPress={() => Alert.alert(
+          'Detectamos um possível acidente!',
+          'Você precisa de ajuda?',
+          [
+            {
+              text: "Cancelar",
+              onPress: () => console.log('Cancelando emergência!'),
+              style: 'cancel'
+            },
+            { 
+              text: "SOS", 
+              onPress: () => console.log("SOCORROOOOOO!!!") 
+            }
+          ],
+          { cancelable: false }
+        )}
+        >
+            <Ionicons name="alert-circle-outline" size={50} color="white" />
+      </TouchableOpacity>
+  </View>
   );
 };
 

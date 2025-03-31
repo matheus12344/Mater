@@ -20,18 +20,33 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 
 type EmergencyScreenRouteProp = { 
-    params: { location: { latitude: number; longitude: number } },
     onback: (index: number) => void;
 };
 
 const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
-  const [location, setLocation] = useState(route.params?.location || null);
   const [eta, setEta] = useState('8 min');
   const fadeAnim = useState(new Animated.Value(0))[0];
   const [driverPosition] = useState({
     latitude: -23.550520,
     longitude: -46.633308
   });
+  const [currentLocation, setCurrentLocation] = React.useState<{ latitude: number; longitude: number }| null>(null);
+
+  React.useEffect(() => {
+      (async () => {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.error('Permissão de localização negada');
+          return;
+        }
+    
+        let location = await Location.getCurrentPositionAsync({});
+        setCurrentLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      })();
+    }, []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -57,9 +72,9 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
 
   const handleShareLocation = async () => {
     // Compartilhar localização
-    if (location) {
+    if (currentLocation) {
       await Share.share({
-        message: `Minha localização de emergência: https://maps.google.com/?q=${location.latitude},${location.longitude}`,
+        message: `Minha localização de emergência: https://maps.google.com/?q=${currentLocation.latitude},${currentLocation.longitude}`,
       });
     }
   };
@@ -89,24 +104,26 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
         </View>
 
         {/* Mapa */}
-        {location ? (
+        {currentLocation ? (
           <MapView
             style={styles.map}
             initialRegion={{
-              latitude: location.latitude,
-              longitude: location.longitude,
+              latitude: currentLocation.latitude,
+              longitude: currentLocation.longitude,
               latitudeDelta: 0.005,
               longitudeDelta: 0.005,
             }}
           >
-            <Marker
-              coordinate={location}
-              anchor={{ x: 0.5, y: 0.5 }}
-            >
-              <Animated.View style={[styles.marker, { opacity: fadeAnim }]}>
-                <Ionicons name="alert-circle" size={32} color="#FF3B30" />
-              </Animated.View>
-            </Marker>
+            {currentLocation && (
+              <Marker
+                coordinate={currentLocation}
+                anchor={{ x: 0.5, y: 0.5 }}
+              >
+                <Animated.View style={[styles.marker, { opacity: fadeAnim }]}>
+                  <Ionicons name="alert-circle" size={32} color="#FF3B30" />
+                </Animated.View>
+              </Marker>
+            )}
 
             <Marker
               coordinate={driverPosition}

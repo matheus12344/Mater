@@ -633,7 +633,7 @@ export default function App() {
               onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
             />
           ): activePage === 'Emergency' ?(
-            <EmergencyScreen route={{ params: { location: { latitude: 0, longitude: 0 } }, onback: handleBackHome }} />
+            <EmergencyScreen route={{ onback: handleBackHome }} />
           ): (
             <View style={styles.otherPages}>
               <Text style={{ color: colors.text }}>{activePage} Page</Text>

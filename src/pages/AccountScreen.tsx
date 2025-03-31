@@ -98,7 +98,7 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
   const handleOpenAddVehicle = () => {
     setTempModel('');
     setTempPlate('');
-    setTempColor('#000');
+    setTempColor(`#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`); //toda vez que adicionarmos um carro novo, apareça uma cor aleatória
     setAddVehicleModalVisible(true);
   };
 

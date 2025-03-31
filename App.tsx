@@ -621,6 +621,8 @@ export default function App() {
                 } 
               }} 
               services={services}
+              onSearchTextChange={handleSearchTextChange}
+              onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
             />
           ): (
             <View style={styles.otherPages}>

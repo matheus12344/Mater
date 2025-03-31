@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text, ScrollView } from 'react-native';
+import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text, ScrollView, FlatList } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useTheme } from '../context/ThemeContext';
@@ -8,7 +8,7 @@ import axios from 'axios';
 import { decode } from '@mapbox/polyline';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LogBox } from 'react-native';
-import { ServiceItem } from 'src/types';
+import { ServiceItem, SuggestionItem } from 'src/types';
 
 type Coordinates = {
   latitude: number;
@@ -27,9 +27,11 @@ interface RouteParams {
 interface MapScreenProps {
   route: RouteParams;
   services: ServiceItem[];
+  onSearchTextChange: (text: string) => Promise<void>;// Nova prop para buscar sugestões
+  onSelectSuggestion: (item: SuggestionItem) => void; // Nova prop para seleção
 }
 
-const MapScreen: React.FC<MapScreenProps> = ({route, services}) => {
+const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChange, onSelectSuggestion}) => {
   const { colors, theme } = useTheme();
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState({
@@ -47,6 +49,11 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services}) => {
   const previousSearchText = useRef<string | null>(null);
   const [lastValidRoute, setLastValidRoute] = useState<Array<{ latitude: number; longitude: number }>>([]);
   const [routeInfo, setRouteInfo] = useState<{ coordinates: Coordinates[]; distance: number } | null>(null);
+  const [showSuggestions, setShowSuggestions] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [localSuggestions, setLocalSuggestions] = React.useState<SuggestionItem[]>([]);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  
 
   useEffect(() => {
     if (!hasRestored.current && 
@@ -255,6 +262,102 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services}) => {
     }
   };
 
+  const fetchOSMSuggestions = async (searchText: string): Promise<SuggestionItem[]> => {
+      try {
+        const url = new URL('https://nominatim.openstreetmap.org/search');
+        url.searchParams.append('format', 'json');
+        url.searchParams.append('q', searchText);
+        url.searchParams.append('addressdetails', '1');
+        url.searchParams.append('countrycodes', 'br');
+        url.searchParams.append('limit', '5');
+        url.searchParams.append('email', 'matheushgevangelista@gmail.com'); // Adicione seu email
+    
+        const response = await fetch(url.toString(), {
+          headers: {
+            'User-Agent': 'Mater/1.0 (matheushgevangelista@gmail.com)', // Obrigatório
+            'Accept-Language': 'pt-BR,pt;q=0.9',
+          },
+        });
+    
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Erro HTTP: ${response.status} - ${text}`);
+        }
+    
+        const data = await response.json();
+        
+        return data.map((item: any) => ({
+          id: item.place_id,
+          title: item.display_name,
+          subtitle: formatAddress(item.address),
+          lat: parseFloat(item.lat),
+          lon: parseFloat(item.lon),
+          type: item.type
+        }));
+      } catch (error) {
+        console.error('Erro detalhado:', error);
+        return [];
+      }
+    };
+    
+    // Função auxiliar para formatar o subtítulo
+    const formatAddress = (address: any) => {
+      const parts = [
+        address.road,
+        address.neighbourhood,
+        address.suburb,
+        address.city,
+        address.state
+      ];
+      return parts.filter(p => p).join(', ');
+    };
+
+    const fetchSuggestions = async (searchText: string) => {
+      const osmResults = await fetchOSMSuggestions(searchText);
+    
+      return [...osmResults];
+    };
+
+    const handleTextChange = async (text: string) => {
+          setSearchQuery(text);
+          
+          if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+          }
+        
+          if (text.length > 2) {
+            setIsLoading(true);
+            setShowSuggestions(true);
+            
+            searchTimeoutRef.current = setTimeout(async () => {
+              try {
+                const suggestions = await fetchSuggestions(text);
+                onSearchTextChange(text);
+                setLocalSuggestions(suggestions);
+              } catch (error) {
+                console.error('Erro na busca:', error);
+              } finally {
+                setIsLoading(false);
+              }
+            }, 300);
+          } else {
+            setShowSuggestions(false);
+            setLocalSuggestions([]);
+          }
+        };
+    
+        const handleSelectSuggestion = (item: SuggestionItem) => {
+          const fullAddress = item.subtitle 
+            ? `${item.title}, ${item.subtitle}` // Combina título e subtítulo
+            : item.title;
+        
+          setSearchQuery(fullAddress); // Atualiza a barra de pesquisa
+          setShowSuggestions(false);
+          onSelectSuggestion(item);
+          handleSearch(fullAddress); // Dispara a busca automaticamente
+        };
+
+
   const calculateServicePrice = (serviceId: string, distance: number) => {
     const pricing = servicePricing[serviceId];
     if (!pricing) return 0;
@@ -371,16 +474,81 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services}) => {
           placeholder="Digite o destino..."
           placeholderTextColor="#666"
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={handleTextChange}
           onSubmitEditing={() => handleSearch(searchQuery)}
         />
         <TouchableOpacity 
           style={[styles.searchButton, { backgroundColor: colors.primary }]}
           onPress={() => handleSearch(searchQuery)}
         >
-          <Ionicons name="search" size={24} color="black" />
+          {isLoading ? (
+            <ActivityIndicator color="black" size={20} />
+            ) : (
+                  <Ionicons name="search" size={20} color="black" />
+         )}
         </TouchableOpacity>
       </LinearGradient>
+
+      {/* Dropdown de sugestões */}
+      {showSuggestions && (
+        <View style={[
+          styles.suggestionsDropdown, 
+          { 
+            backgroundColor: "#fff",
+            top: 70, // Usando a função scale
+            marginHorizontal: 20
+          }
+        ]}>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={{ color: colors.text, marginLeft: 10 }}>
+                Buscando...
+              </Text>
+            </View>
+          ) : localSuggestions.length > 0 ? (
+            <FlatList
+              data={localSuggestions}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.suggestionItem,
+                    { borderBottomColor: colors.border }
+                  ]}
+                  onPress={() => handleSelectSuggestion(item)}
+                >
+                  <Ionicons 
+                    name="location-sharp" 
+                    size={20} 
+                    color={colors.primary} 
+                  />
+                  <View style={styles.suggestionTextContainer}>
+                    {item.subtitle && (
+                      <Text 
+                        style={[
+                          styles.suggestionSubtitle, 
+                          { color: colors.placeholder }
+                        ]}
+                        numberOfLines={1} // Evita overflow
+                        ellipsizeMode="tail"
+                      >
+                        {item.subtitle}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id.toString()}
+              keyboardShouldPersistTaps="always"
+              nestedScrollEnabled
+            />
+          ) : (
+            <Text style={[styles.noResults, { color: colors.placeholder }]}>
+              Nenhum resultado encontrado
+            </Text>
+          )}
+        </View>
+      )}
 
       {loading && (
         <View style={styles.loadingOverlay}>
@@ -538,7 +706,48 @@ const styles = StyleSheet.create({
   priceDetail: {
     fontSize: 14,
     marginVertical: 2
-  }
+  },
+  suggestionsDropdown: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    borderRadius: 8,
+    elevation: 5,
+    maxHeight: 200,
+    zIndex: 1000,
+    marginTop: 10,
+    padding: 0,
+    backgroundColor: '#ffffff', // Replace with a default color
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  suggestionTextContainer: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  suggestionTitleDropdown: {
+    fontSize: 16,
+  },
+  suggestionSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    justifyContent: 'center'
+  },
+  noResults: {
+    padding: 15,
+    textAlign: 'center',
+    color: '#888'
+  },
 });
 
 export default MapScreen;

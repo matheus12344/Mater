@@ -38,6 +38,8 @@ interface HomeTabContentProps {
   searchSuggestions: SuggestionItem[];
   onDeleteHistoryItem: (index: number) => void; // Nova prop para deletar histórico
   onMap: (index: number) => void; // Nova prop para deletar histórico
+  onEmergency: (index: number) => void; // Nova prop para deletar histórico
+  
 
 }
 
@@ -57,7 +59,8 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   onSearchTextChange,
   onSelectSuggestion,
   onDeleteHistoryItem,
-  onMap
+  onMap,
+  onEmergency
 }) => {
 
   const [showSuggestions, setShowSuggestions] = React.useState(false);
@@ -503,7 +506,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
             },
             { 
               text: "SOS", 
-              onPress: () => console.log("SOCORROOOOOO!!!") 
+              onPress: () => onEmergency(0) 
             }
           ],
           { cancelable: false }

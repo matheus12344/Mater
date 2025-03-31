@@ -29,6 +29,7 @@ import PrivacyPolicyScreen from './src/pages/PrivacyScreen';
 import MapScreen from './src/pages/MapScreen';
 import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
+import EmergencyScreen from 'src/pages/EmergencyScreen';
 
 
 // Configurações de tema
@@ -462,6 +463,12 @@ export default function App() {
     const handleMap = () => {
       setActivePage('Map');
     };
+    const handleEmergency = () => {
+      setActivePage('Emergency')
+    }
+    const handleBackHome = () => {
+      setActivePage('Home');
+    };
 
   const suggestions: SuggestionItem[] = [
     { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg', placeId: 'place1', lat: -23.561684, lon: -46.655981, color: '#FF6B6B' },
@@ -559,6 +566,7 @@ export default function App() {
               searchSuggestions={searchSuggestions}
               onDeleteHistoryItem={handleDeleteHistoryItem}
               onMap={handleMap}
+              onEmergency={handleEmergency}
           />
           ) : activePage === 'Serviços' ?(
             <ServicesScreen
@@ -624,6 +632,8 @@ export default function App() {
               onSearchTextChange={handleSearchTextChange}
               onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
             />
+          ): activePage === 'Emergency' ?(
+            <EmergencyScreen route={{ params: { location: { latitude: 0, longitude: 0 } }, onback: handleBackHome }} />
           ): (
             <View style={styles.otherPages}>
               <Text style={{ color: colors.text }}>{activePage} Page</Text>

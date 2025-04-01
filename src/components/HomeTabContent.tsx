@@ -464,7 +464,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
                         coordinate={currentLocation}
                         title="Você está aqui"
                         description="Sua localização atual"
-                        pinColor={colors.primary}
+                        pinColor={'#2A2AC9'}
                       />
                     </MapView>
                   )}

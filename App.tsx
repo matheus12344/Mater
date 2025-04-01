@@ -30,7 +30,8 @@ import 'react-native-gesture-handler';
 import EmergencyScreen from 'src/pages/EmergencyScreen';
 import PaymentScreen from 'src/pages/PaymentScreen';
 import { createStyles, colorSchemes } from './src/styles/theme';
-import { mockServices, mockActivities, mockUserData } from './src/data/mockData';
+import { mockServices, mockActivities, mockUserData, mockAccountData, mockSuggestions } from './src/data/mockData';
+import NavigationButton from 'src/components/NavigationButton';
 
 
 // Configurações responsivas
@@ -57,73 +58,7 @@ const useTheme = () => {
   };
 };
 
-// Componente NavigationButton
-const NavigationButton: React.FC<NavigationButtonProps> = ({ 
-  page, 
-  label, 
-  icon, 
-  activePage, 
-  theme, 
-  onPress 
-}) => {
-  const { colors, styles } = useTheme();
-  const isActive = activePage === page;
 
-  // Valor animado para translação horizontal (inicia em 0)
-  const animatedTranslateX = useRef(new Animated.Value(0)).current;
-
-   // Quando o botão é pressionado
-   const handlePressIn = () => {
-    Animated.spring(animatedTranslateX, {
-      toValue: -5,     // encolhe um pouco
-      useNativeDriver: true,
-    }).start();
-  };
-
-  // Quando o botão é solto
-  const handlePressOut = () => {
-    Animated.spring(animatedTranslateX, {
-      toValue: 0,        // volta ao tamanho normal
-      friction: 7,
-      tension: 70,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  return (
-    <TouchableWithoutFeedback
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={onPress}
-    >
-      <Animated.View
-        style={[
-          styles.navButton,
-          {
-            transform: [{ translateX: animatedTranslateX  }],
-          },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={`Navegar para ${label}`}
-      >
-        <MaterialCommunityIcons
-          name={icon as any}
-          size={scale(24)}
-          color={isActive ? colors.primary : colors.text}
-        />
-        <Text
-          style={[
-            styles.navText,
-            { color: isActive ? colors.primary : colors.text },
-            isActive && styles.activeNavText
-          ]}
-        >
-          {label}
-        </Text>
-      </Animated.View>
-    </TouchableWithoutFeedback>
-  );
-};
 
 // Componente principal
 export default function App() {
@@ -143,6 +78,8 @@ export default function App() {
 
   const services = mockServices;
   const activities = mockActivities;
+  const accountOptions = mockAccountData;
+  const suggestions = mockSuggestions
 
   const fetchOSMSuggestions = async (searchText: string): Promise<SuggestionItem[]> => {
     try {
@@ -198,14 +135,6 @@ export default function App() {
     });
     setActivePage('Map');
   };
-
-  const accountOptions = [
-    { id: '1', icon: 'settings', title: 'Configurações', screen: 'Settings' },
-    { id: '2', icon: 'shield-checkmark', title: 'Privacidade', screen: 'Privacy' },
-    { id: '3', icon: 'card', title: 'Pagamentos', screen: 'Payments' },
-    { id: '4', icon: 'help-circle', title: 'Ajuda', screen: 'Help' },
-    { id: '5', icon: 'log-out', title: 'Sair', screen: 'Logout' },
-  ];
 
   // Função para voltar
   const handleActivityBack = () => {
@@ -339,14 +268,6 @@ export default function App() {
     const handleBackHome = () => {
       setActivePage('Home');
     };
-
-  const suggestions: SuggestionItem[] = [
-    { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg', placeId: 'place1', lat: -23.561684, lon: -46.655981, color: '#FF6B6B' },
-    { id: 2, name: 'Emergência 24h', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h', image: 'https://example.com/tow-truck2.jpg', placeId: 'place2', lat: -23.561684, lon: -46.655981, color: '#4ECDC4' },
-    { id: 3, name: 'Carga Pesada', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada', image: 'https://example.com/tow-truck3.jpg', placeId: 'place3', lat: -23.561684, lon: -46.655981, color: '#FF9F43' },
-    { id: 4, name: 'Assistência Técnica', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica', image: 'https://example.com/tow-truck4.jpg', placeId: 'place4', lat: -23.561684, lon: -46.655981, color: '#6C5CE7' },
-    { id: 5, name: 'Troca de Pneus', src: 'https://example.com/tow-truck4.jpg', title: 'Troca de Pneus', image: 'https://example.com/tow-truck5.jpg', placeId: 'place5', lat: -23.561684, lon: -46.655981, color: '#00B894' },
-  ];
 
   // Carregar histórico
   useEffect(() => {

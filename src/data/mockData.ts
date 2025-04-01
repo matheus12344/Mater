@@ -1,4 +1,4 @@
-import { ServiceItem, ActivityItem, UserData } from '../types';
+import { ServiceItem, ActivityItem, UserData, accountOptions, SuggestionItem } from '../types';
 
 export const mockServices: ServiceItem[] = [
   {
@@ -113,3 +113,19 @@ export const mockUserData: UserData = {
     },
   ],
 }; 
+
+export const mockAccountData: accountOptions = [
+  { id: '1', icon: 'settings', title: 'Configurações', screen: 'Settings' },
+  { id: '2', icon: 'shield-checkmark', title: 'Privacidade', screen: 'Privacy' },
+  { id: '3', icon: 'card', title: 'Pagamentos', screen: 'Payments' },
+  { id: '4', icon: 'help-circle', title: 'Ajuda', screen: 'Help' },
+  { id: '5', icon: 'log-out', title: 'Sair', screen: 'Logout' },
+];
+
+export const mockSuggestions: SuggestionItem[] = [
+  { id: 1, name: 'Guincho Rápido', src: 'https://example.com/tow-truck1.jpg', title: 'Guincho Rápido', image: 'https://example.com/tow-truck1.jpg', placeId: 'place1', lat: -23.561684, lon: -46.655981, color: '#FF6B6B' },
+  { id: 2, name: 'Emergência 24h', src: 'https://example.com/tow-truck2.jpg', title: 'Emergência 24h', image: 'https://example.com/tow-truck2.jpg', placeId: 'place2', lat: -23.561684, lon: -46.655981, color: '#4ECDC4' },
+  { id: 3, name: 'Carga Pesada', src: 'https://example.com/tow-truck3.jpg', title: 'Carga Pesada', image: 'https://example.com/tow-truck3.jpg', placeId: 'place3', lat: -23.561684, lon: -46.655981, color: '#FF9F43' },
+  { id: 4, name: 'Assistência Técnica', src: 'https://example.com/tow-truck4.jpg', title: 'Assistência Técnica', image: 'https://example.com/tow-truck4.jpg', placeId: 'place4', lat: -23.561684, lon: -46.655981, color: '#6C5CE7' },
+  { id: 5, name: 'Troca de Pneus', src: 'https://example.com/tow-truck4.jpg', title: 'Troca de Pneus', image: 'https://example.com/tow-truck5.jpg', placeId: 'place5', lat: -23.561684, lon: -46.655981, color: '#00B894' },
+];

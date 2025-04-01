@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
-import { Text, TouchableWithoutFeedback, Animated } from 'react-native';
+import { Animated, Text, TouchableWithoutFeedback } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { scale } from 'react-native-size-matters';
 
 // Ajuste o tipo PageType conforme sua estrutura, se estiver usando TypeScript.
 interface NavigationButtonProps {
@@ -8,10 +10,8 @@ interface NavigationButtonProps {
   label: string;
   icon: string;
   activePage: string;
+  theme: 'light' | 'dark';
   onPress: () => void;
-  styles: any;
-  colors: any;
-  scale: (size: number) => number;
 }
 
 const NavigationButton: React.FC<NavigationButtonProps> = ({
@@ -19,30 +19,26 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
   label,
   icon,
   activePage,
-  onPress,
-  styles,
-  colors,
-  scale
+  theme,
+  onPress
 }) => {
+  const { colors, styles } = useTheme();
   const isActive = activePage === page;
 
-  // Valor animado de escala (inicia em 1)
-  const animatedScale = useRef(new Animated.Value(1)).current;
+  const animatedTranslateX = useRef(new Animated.Value(0)).current;
 
-  // Quando o botão é pressionado
   const handlePressIn = () => {
-    Animated.spring(animatedScale, {
-      toValue: 0.95,     // encolhe um pouco
+    Animated.spring(animatedTranslateX, {
+      toValue: -5,
       useNativeDriver: true,
     }).start();
   };
 
-  // Quando o botão é solto
   const handlePressOut = () => {
-    Animated.spring(animatedScale, {
-      toValue: 1,        // volta ao tamanho normal
-      friction: 5,
-      tension: 100,
+    Animated.spring(animatedTranslateX, {
+      toValue: 0,
+      friction: 7,
+      tension: 70,
       useNativeDriver: true,
     }).start();
   };
@@ -57,7 +53,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
         style={[
           styles.navButton,
           {
-            transform: [{ scale: animatedScale }],
+            transform: [{ translateX: animatedTranslateX }],
           },
         ]}
         accessibilityRole="button"

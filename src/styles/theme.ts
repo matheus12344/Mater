@@ -534,4 +534,11 @@ export const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
   historyTitle: {
     fontSize: scale(16),
   },
+  navigationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+  },
 }); 

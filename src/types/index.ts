@@ -133,3 +133,10 @@ interface SuggestionItem {
   
 
 export type { TabType, PageType, SuggestionItem, ActivityItem, UserData, Vehicle, NavigationButtonProps, ServiceItem, LocationType, ServicePricing, RootStackParamList };
+
+export type accountOptions = {
+  id: string;
+  icon: string;
+  title: string;
+  screen: string;
+}[];

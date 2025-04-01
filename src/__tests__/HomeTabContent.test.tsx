@@ -1,35 +1,50 @@
-import React from "react";
-import HomeTabContent from "src/components/HomeTabContent";
-import { TabType, SuggestionItem } from "src/types";
+import React from 'react';
+import HomeTabContent from 'src/components/HomeTabContent';
+import { TabType, SuggestionItem } from 'src/types';
+import pt from 'src/locales/pt';
 
-// __tests__/HomeTabContent.test.tsx
-test('renders search input correctly', () => {
-    const { getByPlaceholderText } = render(<HomeTabContent selectedTab={"Viagem"} setSelectedTab={function (tab: TabType): void {
-        throw new Error("Function not implemented.");
-    } } styles={undefined} colors={undefined} scale={function (size: number): number {
-        throw new Error("Function not implemented.");
-    } } searchText={""} setSearchText={function (text: string): void {
-        throw new Error("Function not implemented.");
-    } } handleSearch={function (): void {
-        throw new Error("Function not implemented.");
-    } } history={[]} renderItem={function ({ item }: { item: string; }): JSX.Element {
-        throw new Error("Function not implemented.");
-    } } suggestions={[]} renderSuggestion={function ({ item }: { item: SuggestionItem; }): JSX.Element {
-        throw new Error("Function not implemented.");
-    } } onSearchTextChange={function (text: string): Promise<void> {
-        throw new Error("Function not implemented.");
-    } } onSelectSuggestion={function (item: SuggestionItem): void {
-        throw new Error("Function not implemented.");
-    } } searchSuggestions={[]} onDeleteHistoryItem={function (index: number): void {
-        throw new Error("Function not implemented.");
-    } } onMap={function (index: number): void {
-        throw new Error("Function not implemented.");
-    } } onEmergency={function (index: number): void {
-        throw new Error("Function not implemented.");
-    } } />);
-    expect(getByPlaceholderText('Para onde?')).toBeTruthy();
+describe('HomeTabContent', () => {
+  const mockProps = {
+    selectedTab: 'Viagem' as TabType,
+    setSelectedTab: jest.fn(),
+    styles: {},
+    colors: {
+      text: '#000',
+      placeholder: '#999',
+      card: '#fff',
+      border: '#ddd'
+    },
+    scale: (size: number) => size,
+    searchText: '',
+    setSearchText: jest.fn(),
+    handleSearch: jest.fn(),
+    history: [],
+    renderItem: jest.fn(),
+    suggestions: [],
+    renderSuggestion: jest.fn(),
+    onSearchTextChange: jest.fn(),
+    onSelectSuggestion: jest.fn(),
+    searchSuggestions: [],
+    onDeleteHistoryItem: jest.fn(),
+    onMap: jest.fn(),
+    onEmergency: jest.fn()
+  };
+  it('renders search input with correct placeholder', () => {
+    const { getByPlaceholderText } = render(
+      <HomeTabContent {...mockProps} />
+    );
+    
+    expect(getByPlaceholderText(pt.SEARCH_PLACEHOLDER)).toBeTruthy();
   });
+  it('renders with all required props', () => {
+    const rendered = render(
+      <HomeTabContent {...mockProps} />
+    );
+    
+    expect(rendered).toBeTruthy();
+  });
+});
 
 function render(arg0: React.JSX.Element): { getByPlaceholderText: any; } {
-    throw new Error("Function not implemented.");
+    throw new Error('Function not implemented.');
 }

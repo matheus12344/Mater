@@ -163,6 +163,13 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
       </View>
     );
   };
+  
+  /**
+   * Componente para exibição de itens de histórico com gesto de swipe
+   * param {string} item - Texto do histórico
+   * param {number} index - Índice do item na lista
+   * param {function} onDelete - Função para deletar item
+  */
 
   const renderHistoryItem = ({ item, index }: { item: string; index: number }) => (
     <SwipeableHistoryItem
@@ -531,6 +538,10 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
           ],
           { cancelable: false }
         )}
+        accessible
+        accessibilityLabel="Botão de emergência"
+        accessibilityRole="button"
+        accessibilityHint="Clique para solicitar ajuda em caso de emergência"
         >
             <Ionicons name="alert-circle-outline" size={50} color="white" />
       </TouchableOpacity>

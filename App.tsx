@@ -509,6 +509,21 @@ export default function App() {
       const newHistory = [searchText, ...history].slice(0, 3);
       setHistory(newHistory);
       await saveHistory(newHistory);
+
+      // Fetch suggestions to get coordinates for the search text
+      const suggestions = await fetchOSMSuggestions(searchText);
+      const selectedSuggestion = suggestions[0]; // Use the first suggestion as default
+
+      if (selectedSuggestion) {
+        setMapSearchParams({
+          searchText: selectedSuggestion.subtitle || selectedSuggestion.title,
+          coordinates: {
+            latitude: selectedSuggestion.lat,
+            longitude: selectedSuggestion.lon,
+          },
+        });
+      }
+
       setSearchText('');
       setActivePage('Map');
     }

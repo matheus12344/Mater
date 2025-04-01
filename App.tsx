@@ -30,6 +30,7 @@ import MapScreen from './src/pages/MapScreen';
 import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import EmergencyScreen from 'src/pages/EmergencyScreen';
+import PaymentScreen from 'src/pages/PaymentScreen';
 
 
 // Configurações de tema
@@ -634,7 +635,28 @@ export default function App() {
             />
           ): activePage === 'Emergency' ?(
             <EmergencyScreen route={{ onback: handleBackHome }} />
-          ): (
+          ): activePage === 'Payments' ?(
+            <PaymentScreen 
+              route={{ 
+                key: 'PaymentScreenKey',
+                name: 'Payment',
+                params: { 
+                  service: 'Guincho 24h', 
+                  amount: 250.0, 
+                  serviceDetails: { 
+                    pickup: { latitude: -23.561684, longitude: -46.655981 }, 
+                    destination: { latitude: -23.562684, longitude: -46.656981 }, 
+                    distance: 5.0, 
+                    coordinates: [
+                      { latitude: -23.561684, longitude: -46.655981 },
+                      { latitude: -23.562684, longitude: -46.656981 }
+                    ], 
+                    vehicleType: 'Carro' 
+                  } 
+                } 
+              }} 
+            />
+          ) : (
             <View style={styles.otherPages}>
               <Text style={{ color: colors.text }}>{activePage} Page</Text>
             </View>

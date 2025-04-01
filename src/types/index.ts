@@ -1,6 +1,15 @@
 // Tipos e interfaces
 type TabType = 'Viagem' | 'Serviços';
-type PageType = 'Home' | 'Serviços' | 'Atividade' | 'Conta' | 'DetalhesServiço' | 'DetalhesAtividade' | 'DetalhesVeículo' | 'Settings' | 'Privacy' | 'Map'| 'Payment' | 'Emergency';
+type PageType = 'Home' | 
+  'Serviços' | 
+  'Atividade' | 
+  'Conta' | 
+  'DetalhesServiço' | 
+  'DetalhesAtividade' | 
+  'DetalhesVeículo' | 
+  'Settings' | 
+  'Privacy' | 
+  'Map'| 'Payments' | 'Emergency';
 interface SuggestionItem {
     id: number;
     name: string;

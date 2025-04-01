@@ -31,15 +31,27 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
     longitude: -46.633308
   });
   const [currentLocation, setCurrentLocation] = React.useState<{ latitude: number; longitude: number }| null>(null);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
+  const [licensePlate] = useState(() => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const randomLetters = Array.from({ length: 3 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+    const randomNumbers = Array.from({ length: 4 }, () => numbers[Math.floor(Math.random() * numbers.length)]).join('');
+    return `${randomLetters}${randomNumbers}`;
+  });
 
   React.useEffect(() => {
       (async () => {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
           console.error('Permissão de localização negada');
+          Alert.alert(
+            'Permissão Negada',
+            'Não foi possível acessar sua localização. Por favor, habilite as permissões de localização nas configurações do dispositivo.'
+          );
           return;
         }
-    
+        setLocationPermissionGranted(true);
         let location = await Location.getCurrentPositionAsync({});
         setCurrentLocation({
           latitude: location.coords.latitude,
@@ -66,17 +78,24 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
   }, []);
 
   const handleVideoCall = () => {
-    // Lógica para chamada de vídeo
     Alert.alert('Conectando...', 'Iniciando chamada de vídeo com o socorrista');
   };
 
   const handleShareLocation = async () => {
-    // Compartilhar localização
     if (currentLocation) {
       await Share.share({
         message: `Minha localização de emergência: https://maps.google.com/?q=${currentLocation.latitude},${currentLocation.longitude}`,
       });
+    } else {
+      Alert.alert('Erro', 'Localização atual não disponível.');
     }
+  };
+
+  const handleFirstAid = () => {
+    Alert.alert(
+      'Primeiros Socorros',
+      'Aqui estão algumas instruções básicas de primeiros socorros:\n\n1. Verifique se a área é segura.\n2. Ligue para os serviços de emergência.\n3. Realize os primeiros socorros básicos enquanto aguarda ajuda.'
+    );
   };
 
     function onback(index: number): void {
@@ -104,17 +123,17 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
         </View>
 
         {/* Mapa */}
-        {currentLocation ? (
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: currentLocation.latitude,
-              longitude: currentLocation.longitude,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
-            }}
-          >
-            {currentLocation && (
+        {locationPermissionGranted ? (
+          currentLocation ? (
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: currentLocation.latitude,
+                longitude: currentLocation.longitude,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }}
+            >
               <Marker
                 coordinate={currentLocation}
                 anchor={{ x: 0.5, y: 0.5 }}
@@ -123,20 +142,26 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
                   <Ionicons name="alert-circle" size={32} color="#FF3B30" />
                 </Animated.View>
               </Marker>
-            )}
 
-            <Marker
-              coordinate={driverPosition}
-              anchor={{ x: 0.5, y: 0.5 }}
-            >
-              <View style={styles.driverMarker}>
-                <Ionicons name="car-sport" size={28} color="#FFF" />
-              </View>
-            </Marker>
-          </MapView>
+              <Marker
+                coordinate={driverPosition}
+                anchor={{ x: 0.5, y: 0.5 }}
+              >
+                <View style={styles.driverMarker}>
+                  <Ionicons name="car-sport" size={28} color="#FFF" />
+                </View>
+              </Marker>
+            </MapView>
+          ) : (
+            <View style={styles.loadingMap}>
+              <ActivityIndicator size="large" color="#FFF" />
+            </View>
+          )
         ) : (
           <View style={styles.loadingMap}>
-            <ActivityIndicator size="large" color="#FFF" />
+            <Text style={{ color: '#FFF', textAlign: 'center' }}>
+              Permissão de localização não concedida.
+            </Text>
           </View>
         )}
 
@@ -160,7 +185,7 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
 
               <View style={styles.vehicleInfo}>
                 <Ionicons name="car" size={24} color="#FF3B30" />
-                <Text style={styles.vehicleText}>Guincho Pesado • ABC1D23</Text>
+                <Text style={styles.vehicleText}>Guincho Pesado • {licensePlate}</Text>
               </View>
             </View>
 
@@ -184,7 +209,7 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
 
               <TouchableOpacity 
                 style={styles.actionButton}
-                onPress={() => {/* Lógica SOS */}}
+                onPress={handleFirstAid}
               >
                 <Ionicons name="medkit" size={28} color="#FFF" />
                 <Text style={styles.buttonText}>Primeiros Socorros</Text>

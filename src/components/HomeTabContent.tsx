@@ -25,7 +25,7 @@ interface HomeTabContentProps {
   setSelectedTab: (tab: TabType) => void;
   styles: any;
   colors: any;
-  scale: (size: number) => number; // Caso use a função scale de fora
+  scale: (size: number) => number; 
   searchText: string;
   setSearchText: (text: string) => void;
   handleSearch: () => void;
@@ -68,6 +68,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   const [localSuggestions, setLocalSuggestions] = React.useState<SuggestionItem[]>([]);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const [currentLocation, setCurrentLocation] = React.useState<{ latitude: number; longitude: number }| null>(null);
+  const [searchTimestamps, setSearchTimestamps] = React.useState<{ [key: number]: Date }>({});
 
   React.useEffect(() => {
     (async () => {
@@ -150,7 +151,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
                 {item}
               </Text>
               <Text style={[styles.historySubtitle, { color: colors.text, marginLeft: scale(200), fontSize: scale(12), top: scale(2), position: 'absolute' }]}>
-                10 min atrás
+                {searchTimestamps[index] ? getTimeAgo(searchTimestamps[index]) : 'Agora'}
               </Text>
             </View>
             <Text style={[styles.historySubtitle, { color: 'gray', fontSize: scale(12) }]}>
@@ -261,6 +262,22 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
     setShowSuggestions(false);
 
     console.log('Selecionado:', item);
+  };
+
+  const handlePanicButtonPress = () => {
+    if (currentLocation) {
+      console.log('Solicitação de guincho:');
+      console.log(`Localização atual: Latitude ${currentLocation.latitude}, Longitude ${currentLocation.longitude}`);
+      console.log('Mensagem: Solicitação de guincho enviada com sucesso.');
+    } else {
+      console.log('Erro: Localização atual não disponível.');
+    }
+  };
+
+  const getTimeAgo = (timestamp: Date) => {
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / 60000);
+    return `${diffInMinutes} min atrás`;
   };
 
     const renderTabButton = (tab: string) => {
@@ -506,7 +523,10 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
             },
             { 
               text: "SOS", 
-              onPress: () => onEmergency(0) 
+              onPress: () => {
+                handlePanicButtonPress();
+                onEmergency(0);
+              } 
             }
           ],
           { cancelable: false }

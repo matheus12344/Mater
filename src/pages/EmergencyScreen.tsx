@@ -579,11 +579,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 10,
     right: 0,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderRadius: 20,
     overflow: 'hidden',
     width: '95%',
-    top: 250
+    top: 400
   },
   gradient: {
     padding: 16,

@@ -32,6 +32,7 @@ import PaymentScreen from 'src/pages/PaymentScreen';
 import { createStyles, colorSchemes } from './src/styles/theme';
 import { mockServices, mockActivities, mockUserData, mockAccountData, mockSuggestions } from './src/data/mockData';
 import NavigationButton from 'src/components/NavigationButton';
+import { servicePricing } from './src/config/Pricing';
 
 
 // Configurações responsivas
@@ -351,7 +352,7 @@ export default function App() {
     <ThemeProvider>
       <ActivityProvider>
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor= {colors.background} />
+          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
 
           {activePage === 'Home' ? (
             <HomeTabContent
@@ -373,7 +374,7 @@ export default function App() {
               onDeleteHistoryItem={handleDeleteHistoryItem}
               onMap={handleMap}
               onEmergency={handleEmergency}
-          />
+            />
           ) : activePage === 'Serviços' ?(
             <ServicesScreen
               services={services}
@@ -441,25 +442,26 @@ export default function App() {
           ): activePage === 'Emergency' ?(
             <EmergencyScreen route={{ onback: handleBackHome }} />
           ): activePage === 'Payments' ?(
-            <PaymentScreen 
-              route={{ 
+            <PaymentScreen
+              route={{
                 key: 'PaymentScreenKey',
                 name: 'Payment',
-                params: { 
-                  service: 'Guincho 24h', 
-                  amount: 250.0, 
-                  serviceDetails: { 
-                    pickup: { latitude: -23.561684, longitude: -46.655981 }, 
-                    destination: { latitude: -23.562684, longitude: -46.656981 }, 
-                    distance: 5.0, 
+                params: {
+                  service: selectedService?.title || 'Serviço',
+                  amount: servicePricing[selectedService?.id || '1']?.baseRate || 0,
+                  serviceDetails: {
+                    pickup: { latitude: -23.561684, longitude: -46.655981 },
+                    destination: { latitude: -23.562684, longitude: -46.656981 },
+                    distance: 5.0,
                     coordinates: [
                       { latitude: -23.561684, longitude: -46.655981 },
                       { latitude: -23.562684, longitude: -46.656981 }
-                    ], 
-                    vehicleType: 'Carro' 
-                  } 
-                } 
-              }} 
+                    ],
+                    vehicleType: 'Carro'
+                  }
+                }
+              }}
+              onBack={() => setActivePage('Home')}
             />
           ) : (
             <View style={styles.otherPages}>

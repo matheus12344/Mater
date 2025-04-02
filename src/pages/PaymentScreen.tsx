@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   View, 
   Text, 
-  StyleSheet, 
   TouchableOpacity, 
   ActivityIndicator,
   Animated,
@@ -14,17 +13,19 @@ import {
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from 'src/types';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import * as Haptics from 'expo-haptics';
+import { tailwind } from '../styles/tailwind';
+import { paymentService } from '../services/payment';
 
 type PaymentScreenProps = {
   route: RouteProp<RootStackParamList, 'Payment'>;
+  onBack: () => void;
 };
 
 const { width } = Dimensions.get('window');
 
-const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
+const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, onBack }) => {
   const { colors } = useTheme();
   const { service, amount, serviceDetails } = route.params;
   const [isProcessing, setIsProcessing] = useState(false);
@@ -39,7 +40,6 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
   ];
 
   React.useEffect(() => {
-    // Animação de entrada
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -64,68 +64,82 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     try {
-      // Simulação de API de pagamento
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Sucesso
-      console.log("Pagamento realizado com sucesso!")
+      const result = await paymentService.processPayment(
+        selectedMethod,
+        amount * 100, // Converte para centavos
+        {
+          cardNumber: '4111111111111111', // Cartão de teste
+          expiryDate: '12/25',
+          cvv: '123'
+        }
+      );
+
+      if (result.success) {
+        Alert.alert(
+          'Sucesso!',
+          `Pagamento processado com sucesso!\nID da transação: ${result.transactionId}`,
+          [{ text: 'OK', onPress: onBack }]
+        );
+      } else {
+        throw new Error(result.error || 'Erro ao processar pagamento');
+      }
     } catch (error) {
-      Alert.alert('Erro', 'Pagamento não processado. Tente novamente.');
+      Alert.alert(
+        'Erro',
+        error instanceof Error ? error.message : 'Pagamento não processado. Tente novamente.'
+      );
     } finally {
       setIsProcessing(false);
     }
   };
 
   const renderDetailItem = (label: string, value: string) => (
-    <View style={styles.detailRow}>
-      <Text style={[styles.detailLabel, { color: colors.text }]}>{label}</Text>
-      <Text style={[styles.detailValue, { color: colors.text }]}>{value}</Text>
+    <View style={tailwind('flex-row justify-between items-center mb-2')}>
+      <Text style={tailwind('text-sm font-medium opacity-80')}>{label}</Text>
+      <Text style={tailwind('text-sm font-semibold')}>{value}</Text>
     </View>
   );
 
   return (
     <ScrollView 
-      contentContainerStyle={[styles.container, { backgroundColor: '#fff' }]}
+      style={tailwind('flex-1 bg-white px-5 pt-10')}
       keyboardShouldPersistTaps="handled"
     >
       <Animated.View 
         style={[
-          styles.card, 
+          tailwind('w-full max-w-[500px] mx-auto rounded-2xl p-6 shadow mb-5'),
           { 
-            backgroundColor: '#fff',
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }]
           }
         ]}
       >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: '#000' }]}>Finalizar Pagamento</Text>
+        <View style={tailwind('flex-row justify-between items-center mb-4')}>
+          <Text style={tailwind('text-2xl font-bold')}>Finalizar Pagamento</Text>
           <Ionicons name="lock-closed" size={24} color="#4CAF50" />
         </View>
 
-        <View style={styles.divider} />
+        <View style={tailwind('h-[1px] bg-gray-200 my-2')} />
 
         {/* Resumo do Serviço */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Resumo do Serviço</Text>
+        <View style={tailwind('mb-6')}>
+          <Text style={tailwind('text-lg font-semibold text-primary mb-3')}>Resumo do Serviço</Text>
           {renderDetailItem('Tipo de Serviço:', service)}
           {renderDetailItem('Valor Total:', `R$ ${amount.toFixed(2)}`)}
         </View>
 
         {/* Métodos de Pagamento */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Método de Pagamento</Text>
+        <View style={tailwind('mb-6')}>
+          <Text style={tailwind('text-lg font-semibold text-primary mb-3')}>Método de Pagamento</Text>
           
           {paymentMethods.map(method => (
             <TouchableOpacity
               key={method.id}
-              style={[
-                styles.methodButton,
-                selectedMethod === method.id && { 
-                  borderColor: colors.primary,
-                  backgroundColor: `#000`
-                }
-              ]}
+              style={tailwind(`flex-row items-center p-4 rounded-lg border mb-3 relative ${
+                selectedMethod === method.id 
+                  ? 'border-primary bg-black' 
+                  : 'border-gray-200'
+              }`)}
               onPress={() => setSelectedMethod(method.id)}
               disabled={isProcessing}
             >
@@ -134,13 +148,11 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
                 size={24} 
                 color={selectedMethod === method.id ? colors.primary : colors.text} 
               />
-              <Text style={[
-                styles.methodText,
-                { 
-                  color: selectedMethod === method.id ? colors.primary : colors.text,
-                  marginLeft: 10
-                }
-              ]}>
+              <Text 
+                style={tailwind(`ml-3 flex-1 text-base font-medium ${
+                  selectedMethod === method.id ? 'text-primary' : 'text-gray-900'
+                }`)}
+              >
                 {method.name}
               </Text>
               {selectedMethod === method.id && (
@@ -148,7 +160,7 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
                   name="checkmark-circle" 
                   size={24} 
                   color={colors.primary} 
-                  style={styles.checkIcon}
+                  style={tailwind('absolute right-4')}
                 />
               )}
             </TouchableOpacity>
@@ -157,8 +169,8 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
 
         {/* Detalhes Adicionais */}
         {serviceDetails && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Detalhes</Text>
+          <View style={tailwind('mb-6')}>
+            <Text style={tailwind('text-lg font-semibold text-primary mb-3')}>Detalhes</Text>
             {Object.entries(serviceDetails).map(([key, value]) => (
               renderDetailItem(`${key}:`, String(value))
             ))}
@@ -167,13 +179,9 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
 
         {/* Botão de Pagamento */}
         <TouchableOpacity
-          style={[
-            styles.button,
-            { 
-              backgroundColor: isProcessing ? `${colors.primary}80` : '#000',
-              shadowColor: colors.primary
-            }
-          ]}
+          style={tailwind(`py-4 rounded-xl items-center justify-center shadow-lg mt-2 ${
+            isProcessing ? 'bg-primary/50' : 'bg-black'
+          }`)}
           onPress={handlePayment}
           disabled={isProcessing}
           activeOpacity={0.8}
@@ -182,16 +190,20 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
             <ActivityIndicator color="#000" size="small" />
           ) : (
             <>
-              <Text style={styles.buttonText}>Confirmar Pagamento</Text>
-              <Text style={styles.buttonSubtext}>R$ {amount.toFixed(2)}</Text>
+              <Text style={tailwind('text-white text-lg font-semibold')}>
+                Confirmar Pagamento
+              </Text>
+              <Text style={tailwind('text-white/80 text-sm mt-1')}>
+                R$ {amount.toFixed(2)}
+              </Text>
             </>
           )}
         </TouchableOpacity>
 
         {/* Segurança */}
-        <View style={styles.securityRow}>
+        <View style={tailwind('flex-row items-center justify-center mt-6')}>
           <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
-          <Text style={[styles.securityText, { color: colors.placeholder }]}>
+          <Text style={tailwind('text-xs text-gray-500 ml-1.5')}>
             Pagamento 100% seguro • Dados criptografados
           </Text>
         </View>
@@ -199,113 +211,5 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route}) => {
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 40 : 20,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 500,
-    alignSelf: 'center',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-    marginBottom: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    marginVertical: 8,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  detailLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    opacity: 0.8,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  methodButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
-    marginBottom: 12,
-    position: 'relative',
-  },
-  methodText: {
-    fontSize: 16,
-    fontWeight: '500',
-    flex: 1,
-  },
-  checkIcon: {
-    position: 'absolute',
-    right: 16,
-  },
-  button: {
-    paddingVertical: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-    marginTop: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  buttonSubtext: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  securityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  securityText: {
-    fontSize: 12,
-    marginLeft: 6,
-  },
-});
 
 export default PaymentScreen;

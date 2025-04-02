@@ -9,7 +9,7 @@ type PageType = 'Home' |
   'DetalhesVeículo' | 
   'Settings' | 
   'Privacy' | 
-  'Map'| 'Payments' | 'Emergency';
+  'Map'| 'Payments' | 'Emergency' | 'Points';
 interface SuggestionItem {
     id: number;
     name: string;

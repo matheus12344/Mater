@@ -35,6 +35,7 @@ import { createStyles, colorSchemes } from './src/styles/theme';
 import { mockServices, mockActivities, mockUserData, mockAccountData, mockSuggestions } from './src/data/mockData';
 import NavigationButton from 'src/components/NavigationButton';
 import { servicePricing } from './src/config/Pricing';
+import PointsScreen from './src/pages/PointsScreen';
 
 
 // Configurações responsivas
@@ -367,69 +368,80 @@ export default function App() {
   };
   
 
-  return (
-    <ThemeProvider>
-      <ActivityProvider>
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
-
-          {activePage === 'Home' ? (
-            <HomeTabContent
-              selectedTab={selectedTab}
-              setSelectedTab={setSelectedTab}
+  const renderContent = () => {
+    switch (activePage) {
+      case 'Home':
+        return (
+          <HomeTabContent
+            selectedTab={selectedTab}
+            setSelectedTab={setSelectedTab}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            handleSearch={handleSearch}
+            history={history}
+            renderItem={renderItem}
+            suggestions={suggestions}
+            renderSuggestion={renderSuggestion}
+            onSearchTextChange={handleSearchTextChange}
+            onSelectSuggestion={handleSelectSuggestion}
+            searchSuggestions={searchSuggestions}
+            onDeleteHistoryItem={handleDeleteHistoryItem}
+            onMap={handleMap}
+            onEmergency={handleEmergency}
+          />
+        );
+      case 'Serviços':
+        return (
+          <ServicesScreen
+            services={services}
+            handleServiceSelect={handleServiceSelect}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+          />
+        );
+      case 'Atividade':
+        return (
+          <ActivityScreen
+            activities={activities}
+            renderActivityItem={renderActivityItem}
+            styles={styles}
+            colors={colors}
+            handleActivityPress={handleActivityPress}
+          />
+        );
+      case 'DetalhesAtividade':
+        return (
+          selectedActivity && (
+            <ActivityDetailScreen
+              activity={selectedActivity}
+              onBack={handleActivityBack}
               styles={styles}
               colors={colors}
-              scale={scale}
-              searchText={searchText}
-              setSearchText={setSearchText}
-              handleSearch={handleSearch}
-              history={history}
-              renderItem={renderItem}
-              suggestions={suggestions}
-              renderSuggestion={renderSuggestion}
-              onSearchTextChange={handleSearchTextChange}
-              onSelectSuggestion={handleSelectSuggestion}
-              searchSuggestions={searchSuggestions}
-              onDeleteHistoryItem={handleDeleteHistoryItem}
-              onMap={handleMap}
-              onEmergency={handleEmergency}
+              scale={(size) => size}
             />
-          ) : activePage === 'Serviços' ?(
-            <ServicesScreen
-              services={services}
-              handleServiceSelect={handleServiceSelect}
-              styles={styles}
-              colors={colors}
-              scale={scale}
-            />
-          ) : activePage === 'Atividade' ?(
-              <ActivityScreen
-                activities={activities}
-                renderActivityItem={renderActivityItem}
-                styles={styles}
-                colors={colors}
-                handleActivityPress={handleActivityPress}
-              />
-          ) : activePage === 'DetalhesAtividade' && selectedActivity  ?(
-              <ActivityDetailScreen
-                activity={selectedActivity}
-                onBack={handleActivityBack}
-                styles={styles}
-                colors={colors}
-                scale={(size) => size}
-              />
-          ) : activePage === 'Conta' ?(
-            <AccountScreen
-              userData={userData}
-              setUserData={setUserData}
-              styles={styles}
-              colors={colors}
-              scale={scale}
-              accountOptions={accountOptions}
-              renderVehicleItem={renderVehicleItem}
-              renderAccountOption={renderAccountOption}
-            />
-          ) : activePage === 'DetalhesServiço' && selectedService ?(
+          )
+        );
+      case 'Conta':
+        return (
+          <AccountScreen
+            userData={userData}
+            setUserData={setUserData}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+            accountOptions={accountOptions}
+            renderVehicleItem={renderVehicleItem}
+            renderAccountOption={renderAccountOption}
+            onOptionSelect={handleOptionSelect}
+          />
+        );
+      case 'DetalhesServiço':
+        return (
+          selectedService && (
             <ServiceDetailScreen
               service={selectedService}
               onBack={handleBack}
@@ -438,55 +450,80 @@ export default function App() {
               scale={scale}
               userVehicles={userData.vehicles}
             />
-          ) : activePage === 'Settings' ?(
-            <SettingsScreen 
-              styles={styles} 
-              colors={colors} 
-              scale={scale} 
-            />
-          ) : activePage === 'Privacy' ?(
-            <PrivacyPolicyScreen/>
-          ) : activePage === 'Map' ?(
-            <MapScreen 
-              key="map" 
-              route={{ params: { 
-                  searchText: mapSearchParams.searchText,
-                  coordinates: mapSearchParams.coordinates 
-                } 
-              }} 
-              services={services}
-              onSearchTextChange={handleSearchTextChange}
-              onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
-            />
-          ): activePage === 'Emergency' ?(
-            <EmergencyScreen route={{ onback: handleBackHome }} />
-          ): activePage === 'Payments' ?(
-            <PaymentScreen
-              route={{
-                key: 'PaymentScreenKey',
-                name: 'Payment',
-                params: {
-                  service: selectedService?.title || 'Serviço',
-                  amount: servicePricing[selectedService?.id || '1']?.baseRate || 0,
-                  serviceDetails: {
-                    pickup: { latitude: -23.561684, longitude: -46.655981 },
-                    destination: { latitude: -23.562684, longitude: -46.656981 },
-                    distance: 5.0,
-                    coordinates: [
-                      { latitude: -23.561684, longitude: -46.655981 },
-                      { latitude: -23.562684, longitude: -46.656981 }
-                    ],
-                    vehicleType: 'Carro'
-                  }
+          )
+        );
+      case 'Settings':
+        return (
+          <SettingsScreen 
+            styles={styles} 
+            colors={colors} 
+            scale={scale} 
+          />
+        );
+      case 'Privacy':
+        return (
+          <PrivacyPolicyScreen/>
+        );
+      case 'Map':
+        return (
+          <MapScreen 
+            key="map" 
+            route={{ params: { 
+                searchText: mapSearchParams.searchText,
+                coordinates: mapSearchParams.coordinates 
+              } 
+            }} 
+            services={services}
+            onSearchTextChange={handleSearchTextChange}
+            onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
+          />
+        );
+      case 'Emergency':
+        return (
+          <EmergencyScreen route={{ onback: handleBackHome }} />
+        );
+      case 'Payments':
+        return (
+          <PaymentScreen
+            route={{
+              key: 'PaymentScreenKey',
+              name: 'Payment',
+              params: {
+                service: selectedService?.title || 'Serviço',
+                amount: servicePricing[selectedService?.id || '1']?.baseRate || 0,
+                serviceDetails: {
+                  pickup: { latitude: -23.561684, longitude: -46.655981 },
+                  destination: { latitude: -23.562684, longitude: -46.656981 },
+                  distance: 5.0,
+                  coordinates: [
+                    { latitude: -23.561684, longitude: -46.655981 },
+                    { latitude: -23.562684, longitude: -46.656981 }
+                  ],
+                  vehicleType: 'Carro'
                 }
-              }}
-              onBack={() => setActivePage('Home')}
-            />
-          ) : (
-            <View style={styles.otherPages}>
-              <Text style={{ color: colors.text }}>{activePage} Page</Text>
-            </View>
-          )}
+              }
+            }}
+            onBack={() => setActivePage('Home')}
+          />
+        );
+      case 'Points':
+        return <PointsScreen navigation={{ goBack: () => setActivePage('Conta') }} />;
+      default:
+        return (
+          <View style={styles.otherPages}>
+            <Text style={{ color: colors.text }}>{activePage} Page</Text>
+          </View>
+        );
+    }
+  };
+
+  return (
+    <ThemeProvider>
+      <ActivityProvider>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
+
+          {renderContent()}
 
           <View style={[styles.footer, { borderTopColor: colors.border }]}>
             <NavigationButton
@@ -521,6 +558,7 @@ export default function App() {
               theme={theme}
               onPress={() => setActivePage('Conta')}
             />
+            
           </View>
         </SafeAreaView>
       </ActivityProvider>

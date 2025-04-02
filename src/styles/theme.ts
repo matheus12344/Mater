@@ -541,4 +541,101 @@ export const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
   },
+  backButton: {
+    position: 'absolute',
+    left: 16,
+    top: 16,
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  card: {
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  pointsContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  pointsTitle: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  pointsValue: {
+    fontSize: 36,
+    fontWeight: 'bold',
+  },
+  levelContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  levelTitle: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  levelBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  levelText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  progressContainer: {
+    marginTop: 20,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressText: {
+    textAlign: 'center',
+    marginTop: 8,
+    fontSize: 14,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  benefitText: {
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  nextLevelText: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  nextLevelBenefits: {
+    marginTop: 8,
+  },
+  pointsGuide: {
+    marginTop: 16,
+  },
+  pointsGuideItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  pointsGuideText: {
+    marginLeft: 12,
+    fontSize: 16,
+  },
 }); 

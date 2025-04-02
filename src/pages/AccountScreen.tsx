@@ -9,7 +9,8 @@ import {
   Modal,
   TextInput,
   StyleSheet,
-  Alert
+  Alert,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker'; 
@@ -38,15 +39,21 @@ interface AccountOption {
   screen: string;
 }
 
+// Configurações responsivas
+const { width } = Dimensions.get('window');
+const guidelineBaseWidth = 375;
+const scale = (size: number) => (width / guidelineBaseWidth) * size;
+
 interface AccountScreenProps {
   userData: UserData;
-  setUserData: (data: UserData) => void;  // Nova prop para atualizar dados
+  setUserData: (data: UserData) => void;
   styles: any;            
   colors: any;            
   scale: (size: number) => number; 
   accountOptions: AccountOption[];
   renderVehicleItem: ({ item }: { item: Vehicle }) => JSX.Element;
   renderAccountOption: ({ item }: { item: AccountOption }) => JSX.Element;
+  onOptionSelect: (screen: string) => void; // Nova prop para navegação
 }
 
 const AccountScreen: React.FC<AccountScreenProps> = ({
@@ -57,7 +64,8 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
   scale,
   accountOptions,
   renderVehicleItem,
-  renderAccountOption
+  renderAccountOption,
+  onOptionSelect
 }) => {
 
   // Modais de edição
@@ -302,6 +310,11 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
     </Swipeable>
   );
 
+  // Substituir o handleOptionSelect existente
+  const handleOptionSelect = (screen: string) => {
+    onOptionSelect(screen);
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.accountContainer}>
@@ -326,6 +339,27 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
             <Ionicons name="pencil" size={scale(18)} color={colors.primary} />
           </TouchableOpacity>
         </View>
+
+        {/* Botão de Pontos e Recompensas */}
+        <TouchableOpacity 
+          style={[localStyles.pointsButton, { backgroundColor: colors.primary }]}
+          onPress={() => handleOptionSelect('Points')}
+        >
+          <View style={localStyles.pointsButtonContent}>
+            <View style={localStyles.pointsButtonLeft}>
+              <Ionicons name="star" size={scale(24)} color="#FFFFFF" />
+              <View style={localStyles.pointsButtonTextContainer}>
+                <Text style={localStyles.pointsButtonTitle}>Pontos e Recompensas</Text>
+                <Text style={localStyles.pointsButtonSubtitle}>Ganhe pontos e benefícios</Text>
+              </View>
+            </View>
+            <View style={localStyles.pointsButtonRight}>
+              <Text style={localStyles.pointsButtonValue}>2.500</Text>
+              <Text style={localStyles.pointsButtonLabel}>pontos</Text>
+              <Ionicons name="chevron-forward" size={scale(20)} color="#FFFFFF" />
+            </View>
+          </View>
+        </TouchableOpacity>
 
         {/* Seção de Veículos */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -531,6 +565,55 @@ const localStyles = StyleSheet.create({
   deleteButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  pointsButton: {
+    marginHorizontal: scale(10),
+    marginBottom: scale(25),
+    borderRadius: scale(16),
+    padding: scale(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    width: '95%',
+  },
+  pointsButtonContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pointsButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pointsButtonTextContainer: {
+    marginLeft: scale(12),
+  },
+  pointsButtonTitle: {
+    color: '#FFFFFF',
+    fontSize: scale(12),
+    fontWeight: '600',
+    marginBottom: scale(2),
+  },
+  pointsButtonSubtitle: {
+    color: '#FFFFFF',
+    fontSize: scale(11),
+    opacity: 0.9,
+  },
+  pointsButtonRight: {
+    alignItems: 'flex-end',
+  },
+  pointsButtonValue: {
+    color: '#FFFFFF',
+    fontSize: scale(20),
+    fontWeight: 'bold',
+    marginBottom: scale(2),
+  },
+  pointsButtonLabel: {
+    color: '#FFFFFF',
+    fontSize: scale(12),
+    opacity: 0.9,
   },
 });
 

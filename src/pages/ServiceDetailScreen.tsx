@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ScrollView,
   View,
@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityItem, Vehicle } from '../types';
 import * as Location from 'expo-location';
 import { useActivities } from '../context/ActivityContext';
+import SmartFeaturesService from '../services/SmartFeaturesService';
 
 export interface ServiceItem {
   id: string;
@@ -52,7 +53,30 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
     coords: { latitude: number; longitude: number },
     address?: string 
   } | null>(null);
+  const [pricePrediction, setPricePrediction] = useState<any>(null);
+  const [nearbyWorkshops, setNearbyWorkshops] = useState<any[]>([]);
   const { addActivity } = useActivities();
+  const smartFeaturesService = SmartFeaturesService.getInstance();
+
+  useEffect(() => {
+    if (incidentLocation) {
+      loadSmartFeatures();
+    }
+  }, [incidentLocation]);
+
+  const loadSmartFeatures = async () => {
+    try {
+      // Carrega previsão de preço
+      const prediction = await smartFeaturesService.predictPrice(service.id, 10);
+      setPricePrediction(prediction);
+
+      // Carrega oficinas próximas
+      const workshops = await smartFeaturesService.findNearbyWorkshops('carro');
+      setNearbyWorkshops(workshops);
+    } catch (error) {
+      console.error('Erro ao carregar funcionalidades inteligentes:', error);
+    }
+  };
 
   // Quando o usuário toca no botão "Solicitar"
   const handleSolicitar = () => {
@@ -85,43 +109,156 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
     <Modal visible={requestModalVisible} animationType="slide" transparent>
       <View style={localStyles.modalOverlay}>
         <View style={[localStyles.modalContainer, { backgroundColor: colors.card }]}>
-          <Text style={[localStyles.modalTitle, { color: colors.text }]}>
-            Detalhes da Solicitação
-          </Text>
-
-          {/* Seletor de Veículo */}
-          <Text style={[localStyles.modalLabel, { color: colors.text }]}>Veículo:</Text>
-          <View style={localStyles.vehicleSelector}>
-            {userVehicles.map(vehicle => (
-              <TouchableOpacity
-                key={vehicle.id}
-                style={[
-                  localStyles.vehicleOption,
-                  selectedVehicle?.id === vehicle.id && 
-                    { backgroundColor: colors.primary + '20' }
-                ]}
-                onPress={() => setSelectedVehicle(vehicle)}
-              >
-                <Text style={{ color: colors.text }}>{vehicle.model}</Text>
-                <Text style={{ color: colors.placeholder }}>{vehicle.plate}</Text>
-              </TouchableOpacity>
-            ))}
+          {/* Header */}
+          <View style={localStyles.modalHeader}>
+            <Text style={[localStyles.modalTitle, { color: colors.text }]}>
+              Detalhes da Solicitação
+            </Text>
+            <TouchableOpacity 
+              onPress={handleCancelSolicitar}
+              style={localStyles.closeButton}
+            >
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
           </View>
 
-          {/* Localização */}
-          <Text style={[localStyles.modalLabel, { color: colors.text }]}>Localização:</Text>
-          <TouchableOpacity 
-            style={localStyles.locationButton}
-            onPress={getCurrentLocation}
+          <ScrollView 
+            style={localStyles.modalScroll}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={localStyles.modalScrollContent}
           >
-            <Ionicons name="location" size={20} color={colors.primary} />
-            <Text style={{ color: colors.primary, marginLeft: 8 }}>
-              {incidentLocation?.address || 'Obter localização atual'}
-            </Text>
-          </TouchableOpacity>
+            {/* Seletor de Veículo */}
+            <View style={localStyles.section}>
+              <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                <Ionicons name="car" size={20} color={colors.primary} /> Veículo
+              </Text>
+              <View style={localStyles.vehicleSelector}>
+                {userVehicles.map(vehicle => (
+                  <TouchableOpacity
+                    key={vehicle.id}
+                    style={[
+                      localStyles.vehicleOption,
+                      selectedVehicle?.id === vehicle.id && 
+                        { backgroundColor: colors.primary + '20', borderColor: colors.primary }
+                    ]}
+                    onPress={() => setSelectedVehicle(vehicle)}
+                  >
+                    <Ionicons 
+                      name="car-sport" 
+                      size={24} 
+                      color={selectedVehicle?.id === vehicle.id ? colors.primary : colors.text} 
+                    />
+                    <View style={localStyles.vehicleInfo}>
+                      <Text style={[localStyles.vehicleModel, { color: colors.text }]}>
+                        {vehicle.model}
+                      </Text>
+                      <Text style={[localStyles.vehiclePlate, { color: colors.placeholder }]}>
+                        {vehicle.plate}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Localização */}
+            <View style={localStyles.section}>
+              <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                <Ionicons name="location" size={20} color={colors.primary} /> Localização
+              </Text>
+              <TouchableOpacity 
+                style={[
+                  localStyles.locationButton,
+                  { borderColor: colors.border }
+                ]}
+                onPress={getCurrentLocation}
+              >
+                <Ionicons name="location" size={20} color={colors.primary} />
+                <Text style={[localStyles.locationText, { color: colors.text }]}>
+                  {incidentLocation?.address || 'Obter localização atual'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Previsão de Preço */}
+            {pricePrediction && (
+              <View style={localStyles.section}>
+                <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                  <Ionicons name="cash" size={20} color={colors.primary} /> Previsão de Preço
+                </Text>
+                <View style={[localStyles.priceCard, { backgroundColor: colors.primary + '10' }]}>
+                  <Text style={[localStyles.priceText, { color: colors.primary }]}>
+                    R$ {pricePrediction.predictedPrice.toFixed(2)}
+                  </Text>
+                  <View style={localStyles.priceDetails}>
+                    <View style={localStyles.priceDetailItem}>
+                      <Ionicons name="navigate" size={16} color={colors.primary} />
+                      <Text style={[localStyles.priceDetailText, { color: colors.text }]}>
+                        {pricePrediction.distance} km
+                      </Text>
+                    </View>
+                    <View style={localStyles.priceDetailItem}>
+                      <Ionicons name="time" size={16} color={colors.primary} />
+                      <Text style={[localStyles.priceDetailText, { color: colors.text }]}>
+                        {pricePrediction.timeOfDay}
+                      </Text>
+                    </View>
+                    <View style={localStyles.priceDetailItem}>
+                      <Ionicons name="trending-up" size={16} color={colors.primary} />
+                      <Text style={[localStyles.priceDetailText, { color: colors.text }]}>
+                        {Math.round(pricePrediction.demand * 100)}% demanda
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Oficinas Próximas */}
+            {nearbyWorkshops.length > 0 && (
+              <View style={localStyles.section}>
+                <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                  <Ionicons name="business" size={20} color={colors.primary} /> Oficinas Próximas
+                </Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={localStyles.workshopsScroll}
+                >
+                  {nearbyWorkshops.map(workshop => (
+                    <TouchableOpacity 
+                      key={workshop.id} 
+                      style={[localStyles.workshopCard, { backgroundColor: colors.card }]}
+                    >
+                      <View style={localStyles.workshopHeader}>
+                        <Ionicons name="business" size={24} color={colors.primary} />
+                        <Text style={[localStyles.workshopName, { color: colors.text }]}>
+                          {workshop.name}
+                        </Text>
+                      </View>
+                      <View style={localStyles.workshopDetails}>
+                        <View style={localStyles.workshopDetailItem}>
+                          <Ionicons name="navigate" size={16} color={colors.primary} />
+                          <Text style={[localStyles.workshopDetailText, { color: colors.text }]}>
+                            {workshop.distance} km
+                          </Text>
+                        </View>
+                        <View style={localStyles.workshopDetailItem}>
+                          <Ionicons name="star" size={16} color="#FFC107" />
+                          <Text style={[localStyles.workshopDetailText, { color: colors.text }]}>
+                            {workshop.rating}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </ScrollView>
 
           {/* Botões de Ação */}
-          <View style={localStyles.modalButtonsContainer}>
+          <View style={localStyles.modalFooter}>
             <TouchableOpacity
               style={[localStyles.modalButton, { backgroundColor: colors.border }]}
               onPress={handleCancelSolicitar}
@@ -261,7 +398,7 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
         <TouchableOpacity 
           style={[
             styles.detailActionButton, 
-            { backgroundColor: service.color + 'DD' }
+            { backgroundColor: service.color}
           ]}
           onPress={handleSolicitar}
         >
@@ -282,52 +419,149 @@ const localStyles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 16,
+    justifyContent: 'flex-end',
   },
   modalContainer: {
-    borderRadius: 12,
-    padding: 16,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+    flex: 1,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  modalButtonsContainer: {
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
-  modalButton: {
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
   },
-  modalLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 12,
-    marginBottom: 8,
+  closeButton: {
+    padding: 8,
+  },
+  modalScroll: {
+    flex: 1,
+    maxHeight: '80%',
+  },
+  modalScrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   vehicleSelector: {
-    marginBottom: 16,
+    gap: 12,
   },
   vehicleOption: {
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#00000010',
+    borderColor: 'rgba(0,0,0,0.1)',
+    gap: 12,
+  },
+  vehicleInfo: {
+    flex: 1,
+  },
+  vehicleModel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  vehiclePlate: {
+    fontSize: 14,
   },
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#00000010',
+    gap: 12,
+  },
+  locationText: {
+    fontSize: 16,
+    flex: 1,
+  },
+  priceCard: {
+    padding: 16,
+    borderRadius: 12,
+  },
+  priceText: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  priceDetails: {
+    gap: 8,
+  },
+  priceDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  priceDetailText: {
+    fontSize: 14,
+  },
+  workshopsScroll: {
+    paddingRight: 16,
+    gap: 12,
+  },
+  workshopCard: {
+    width: 200,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  workshopHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  workshopName: {
+    fontSize: 16,
+    fontWeight: '500',
+    flex: 1,
+  },
+  workshopDetails: {
+    gap: 8,
+  },
+  workshopDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  workshopDetailText: {
+    fontSize: 14,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
   },
 });
 

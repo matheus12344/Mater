@@ -1,6 +1,6 @@
 # Sugestões de Melhorias para o Mater
 
-## 1. Sistema de Pontos e Recompensas
+## 1. Sistema de Pontos e Recompensas - FEITO
 - Implementar programa de fidelidade com pontos por serviço
 - Sistema de troca de pontos por descontos
 - Níveis de usuário:
@@ -10,7 +10,7 @@
   - Platina
 - Benefícios exclusivos por nível
 
-## 2. Recursos de Segurança Aprimorados
+## 2. Recursos de Segurança Aprimorados - FEITO
 - Verificação de identidade do motorista do guincho
 - Compartilhamento de localização em tempo real
 - Botão de pânico com alerta para autoridades

@@ -371,73 +371,73 @@ export default function App() {
   const renderContent = () => {
     switch (activePage) {
       case 'Home':
-        return (
-          <HomeTabContent
-            selectedTab={selectedTab}
-            setSelectedTab={setSelectedTab}
-            styles={styles}
-            colors={colors}
-            scale={scale}
-            searchText={searchText}
-            setSearchText={setSearchText}
-            handleSearch={handleSearch}
-            history={history}
-            renderItem={renderItem}
-            suggestions={suggestions}
-            renderSuggestion={renderSuggestion}
-            onSearchTextChange={handleSearchTextChange}
-            onSelectSuggestion={handleSelectSuggestion}
-            searchSuggestions={searchSuggestions}
-            onDeleteHistoryItem={handleDeleteHistoryItem}
-            onMap={handleMap}
-            onEmergency={handleEmergency}
+  return (
+            <HomeTabContent
+              selectedTab={selectedTab}
+              setSelectedTab={setSelectedTab}
+              styles={styles}
+              colors={colors}
+              scale={scale}
+              searchText={searchText}
+              setSearchText={setSearchText}
+              handleSearch={handleSearch}
+              history={history}
+              renderItem={renderItem}
+              suggestions={suggestions}
+              renderSuggestion={renderSuggestion}
+              onSearchTextChange={handleSearchTextChange}
+              onSelectSuggestion={handleSelectSuggestion}
+              searchSuggestions={searchSuggestions}
+              onDeleteHistoryItem={handleDeleteHistoryItem}
+              onMap={handleMap}
+              onEmergency={handleEmergency}
           />
         );
       case 'Serviços':
         return (
-          <ServicesScreen
-            services={services}
-            handleServiceSelect={handleServiceSelect}
-            styles={styles}
-            colors={colors}
-            scale={scale}
-          />
+            <ServicesScreen
+              services={services}
+              handleServiceSelect={handleServiceSelect}
+              styles={styles}
+              colors={colors}
+              scale={scale}
+            />
         );
       case 'Atividade':
         return (
-          <ActivityScreen
-            activities={activities}
-            renderActivityItem={renderActivityItem}
-            styles={styles}
-            colors={colors}
-            handleActivityPress={handleActivityPress}
-          />
+              <ActivityScreen
+                activities={activities}
+                renderActivityItem={renderActivityItem}
+                styles={styles}
+                colors={colors}
+                handleActivityPress={handleActivityPress}
+              />
         );
       case 'DetalhesAtividade':
         return (
           selectedActivity && (
-            <ActivityDetailScreen
-              activity={selectedActivity}
-              onBack={handleActivityBack}
-              styles={styles}
-              colors={colors}
-              scale={(size) => size}
-            />
+              <ActivityDetailScreen
+                activity={selectedActivity}
+                onBack={handleActivityBack}
+                styles={styles}
+                colors={colors}
+                scale={(size) => size}
+              />
           )
         );
       case 'Conta':
         return (
-          <AccountScreen
-            userData={userData}
-            setUserData={setUserData}
-            styles={styles}
-            colors={colors}
-            scale={scale}
-            accountOptions={accountOptions}
-            renderVehicleItem={renderVehicleItem}
-            renderAccountOption={renderAccountOption}
+            <AccountScreen
+              userData={userData}
+              setUserData={setUserData}
+              styles={styles}
+              colors={colors}
+              scale={scale}
+              accountOptions={accountOptions}
+              renderVehicleItem={renderVehicleItem}
+              renderAccountOption={renderAccountOption}
             onOptionSelect={handleOptionSelect}
-          />
+            />
         );
       case 'DetalhesServiço':
         return (
@@ -454,55 +454,55 @@ export default function App() {
         );
       case 'Settings':
         return (
-          <SettingsScreen 
-            styles={styles} 
-            colors={colors} 
-            scale={scale} 
-          />
+            <SettingsScreen 
+              styles={styles} 
+              colors={colors} 
+              scale={scale} 
+            />
         );
       case 'Privacy':
         return (
-          <PrivacyPolicyScreen/>
+            <PrivacyPolicyScreen/>
         );
       case 'Map':
         return (
-          <MapScreen 
-            key="map" 
-            route={{ params: { 
-                searchText: mapSearchParams.searchText,
-                coordinates: mapSearchParams.coordinates 
-              } 
-            }} 
-            services={services}
-            onSearchTextChange={handleSearchTextChange}
-            onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
-          />
+            <MapScreen 
+              key="map" 
+              route={{ params: { 
+                  searchText: mapSearchParams.searchText,
+                  coordinates: mapSearchParams.coordinates 
+                } 
+              }} 
+              services={services}
+              onSearchTextChange={handleSearchTextChange}
+              onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
+            />
         );
       case 'Emergency':
         return (
-          <EmergencyScreen route={{ onback: handleBackHome }} />
+            <EmergencyScreen route={{ onback: handleBackHome }} />
         );
       case 'Payments':
         return (
-          <PaymentScreen
-            route={{
-              key: 'PaymentScreenKey',
-              name: 'Payment',
-              params: {
+            <PaymentScreen 
+              route={{ 
+                key: 'PaymentScreenKey',
+                name: 'Payment',
+                params: { 
                 service: selectedService?.title || 'Serviço',
                 amount: servicePricing[selectedService?.id || '1']?.baseRate || 0,
-                serviceDetails: {
-                  pickup: { latitude: -23.561684, longitude: -46.655981 },
-                  destination: { latitude: -23.562684, longitude: -46.656981 },
-                  distance: 5.0,
-                  coordinates: [
-                    { latitude: -23.561684, longitude: -46.655981 },
-                    { latitude: -23.562684, longitude: -46.656981 }
-                  ],
-                  vehicleType: 'Carro'
-                }
-              }
-            }}
+                  serviceDetails: { 
+                    pickup: { latitude: -23.561684, longitude: -46.655981 }, 
+                    destination: { latitude: -23.562684, longitude: -46.656981 }, 
+                    distance: 5.0, 
+                    coordinates: [
+                      { latitude: -23.561684, longitude: -46.655981 },
+                      { latitude: -23.562684, longitude: -46.656981 }
+                    ], 
+                    vehicleType: 'Carro' 
+                  } 
+                } 
+              }} 
             onBack={() => setActivePage('Home')}
           />
         );
@@ -510,9 +510,9 @@ export default function App() {
         return <PointsScreen navigation={{ goBack: () => setActivePage('Conta') }} />;
       default:
         return (
-          <View style={styles.otherPages}>
-            <Text style={{ color: colors.text }}>{activePage} Page</Text>
-          </View>
+            <View style={styles.otherPages}>
+              <Text style={{ color: colors.text }}>{activePage} Page</Text>
+            </View>
         );
     }
   };

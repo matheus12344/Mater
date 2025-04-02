@@ -17,6 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as FileSystem from 'expo-file-system';
+import SmartFeaturesService from '../services/SmartFeaturesService';
 
 interface Vehicle {
   id: string;
@@ -82,6 +83,10 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
   const [tempPlate, setTempPlate] = useState('');
   const [tempColor, setTempColor] = useState('#000');
 
+  const [maintenanceSchedule, setMaintenanceSchedule] = useState<any>(null);
+  const [insuranceQuote, setInsuranceQuote] = useState<any>(null);
+  const smartFeaturesService = SmartFeaturesService.getInstance();
+
   // Função para salvar a imagem no cache
   const saveImageToCache = async (imageUri: string) => {
     try {
@@ -136,6 +141,23 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
     };
     loadVehicles();
   }, []);
+
+  // Carregar dados de manutenção e seguro
+  useEffect(() => {
+    const loadSmartFeatures = async () => {
+      try {
+        if (userData.vehicles.length > 0) {
+          const vehicleId = userData.vehicles[0].id;
+          await smartFeaturesService.scheduleMaintenance(vehicleId, 'oil');
+          const quote = await smartFeaturesService.getInsuranceQuote(vehicleId);
+          setInsuranceQuote(quote);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar funcionalidades inteligentes:', error);
+      }
+    };
+    loadSmartFeatures();
+  }, [userData.vehicles]);
 
   // Função para salvar dados do usuário
   const saveUserData = async (data: UserData) => {
@@ -302,7 +324,7 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
           style={localStyles.deleteButton}
           onPress={() => handleDeleteVehicle(item.id)}
         >
-          <Text style={localStyles.deleteButtonText}>Excluir</Text>
+          <Ionicons name="trash-outline" size={24} color="#fff" />
         </TouchableOpacity>
       )}
     >
@@ -328,7 +350,7 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
             <Text style={[styles.profileName, { color: colors.text }]}>
               {userData.name}
             </Text>
-            <Text style={[styles.profileEmail, { color: colors.placeholder }]}>
+            <Text style={[styles.profileEmail, { color: colors.placeholder, fontSize: 12 }]}>
               {userData.email}
             </Text>
           </View>
@@ -379,8 +401,51 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
           renderItem={renderVehicleItemWithSwipe}
           keyExtractor={(item) => item.id}
           scrollEnabled={false}
-          contentContainerStyle={styles.vehicleList}
+          contentContainerStyle={[styles.vehicleList]}
         />
+
+        {/* Seção de Manutenção */}
+        {maintenanceSchedule && (
+          <View style={localStyles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Próxima Manutenção
+            </Text>
+            <View style={localStyles.maintenanceCard}>
+              <View style={localStyles.maintenanceHeader}>
+                <Ionicons name="construct-outline" size={24} color="#FF9800" />
+                <Text style={[localStyles.maintenanceTitle, { color: colors.text }]}>
+                  Troca de Óleo
+                </Text>
+              </View>
+              <Text style={[localStyles.maintenanceDate, { color: colors.placeholder }]}>
+                Próxima: 15/05/2024
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Seção de Seguro */}
+        {insuranceQuote && (
+          <View style={[localStyles.sectionContainer, {marginTop: -20, marginBottom: 10}]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Seguro do Veículo
+            </Text>
+            <View style={localStyles.insuranceCard}>
+              <View style={localStyles.insuranceHeader}>
+                <Ionicons name="shield-checkmark-outline" size={24} color="#9C27B0" />
+                <Text style={[localStyles.insuranceTitle, { color: colors.text }]}>
+                  {insuranceQuote.provider}
+                </Text>
+              </View>
+              <Text style={[localStyles.insurancePrice, { color: colors.primary }]}>
+                R$ {insuranceQuote.price.toFixed(2)}
+              </Text>
+              <Text style={[localStyles.insuranceValidity, { color: colors.placeholder }]}>
+                Validade: {insuranceQuote.validity}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Opções da Conta */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -560,7 +625,8 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
-    height: '100%',
+    height: '90%',
+    borderRadius: 10,
   },
   deleteButtonText: {
     color: '#fff',
@@ -614,6 +680,69 @@ const localStyles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: scale(12),
     opacity: 0.9,
+  },
+  sectionContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+  maintenanceCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  maintenanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  maintenanceTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  maintenanceDate: {
+    fontSize: 14,
+  },
+  insuranceCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  insuranceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  insuranceTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  insurancePrice: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  insuranceValidity: {
+    fontSize: 14,
   },
 });
 

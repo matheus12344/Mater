@@ -20,6 +20,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Contacts from 'expo-contacts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import SecurityService from '../services/SecurityService';
+import SmartFeaturesService from '../services/SmartFeaturesService';
 
 type EmergencyScreenRouteProp = { 
     onback: (index: number) => void;
@@ -45,6 +48,11 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
     const randomNumbers = Array.from({ length: 4 }, () => numbers[Math.floor(Math.random() * numbers.length)]).join('');
     return `${randomLetters}${randomNumbers}`;
   });
+  const [driverVerification, setDriverVerification] = useState<any>(null);
+  const [serviceHistory, setServiceHistory] = useState<any[]>([]);
+
+  const securityService = SecurityService.getInstance();
+  const smartFeaturesService = SmartFeaturesService.getInstance();
 
   // Carrega contatos de emergência
   const loadEmergencyContacts = async () => {
@@ -54,10 +62,43 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
         const { data } = await Contacts.getContactsAsync({
           fields: [Contacts.Fields.PhoneNumbers],
         });
-        setEmergencyContacts(data.slice(0, 3)); // Pega os 3 primeiros contatos como exemplo
+        setEmergencyContacts(data.slice(0, 3));
       }
     } catch (error) {
       console.error('Erro ao carregar contatos:', error);
+    }
+  };
+
+  // Inicia compartilhamento de localização
+  const startLocationSharing = async () => {
+    try {
+      await securityService.startLocationSharing();
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível iniciar o compartilhamento de localização');
+    }
+  };
+
+  // Ativa modo de pânico
+  const handlePanicMode = async () => {
+    try {
+      await securityService.activatePanicMode();
+      Vibration.vibrate([500, 500, 500], true);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível ativar o modo de emergência');
+    }
+  };
+
+  // Verifica identidade do motorista
+  const verifyDriver = async () => {
+    try {
+      const driverData = await securityService.verifyDriverIdentity('driver123');
+      Alert.alert(
+        'Motorista Verificado',
+        `Nome: ${driverData.name}\nPlaca: ${driverData.vehiclePlate}\nAvaliação: ${driverData.rating}`
+      );
+      setDriverVerification(driverData);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível verificar o motorista');
     }
   };
 
@@ -73,6 +114,23 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
       return () => clearInterval(interval);
     }
   }, [currentLocation]);
+
+  // Carregar dados de segurança
+  useEffect(() => {
+    loadSecurityData();
+  }, []);
+
+  const loadSecurityData = async () => {
+    try {
+      // Carregar histórico de serviços
+      const history = await AsyncStorage.getItem('service_history');
+      if (history) {
+        setServiceHistory(JSON.parse(history));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados de segurança:', error);
+    }
+  };
 
   React.useEffect(() => {
     (async () => {
@@ -106,14 +164,14 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
           });
         }
       );
+
+      // Inicia compartilhamento de localização
+      await startLocationSharing();
     })();
 
     loadEmergencyContacts();
     simulateDriverMovement();
-    
-    // Vibração de alerta
-    //const vibrationPattern = [500, 500, 500];
-   // Vibration.vibrate(vibrationPattern, true);
+    verifyDriver();
 
     return () => {
       Vibration.cancel();
@@ -242,6 +300,7 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+    
         {/* Cabeçalho */}
         <View style={styles.header}>
           <TouchableOpacity 
@@ -322,7 +381,7 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
         )}
 
         {/* Painel de Controle Flutuante */}
-        <Animated.View style={[styles.controlPanel, { opacity: fadeAnim }]}>
+        <Animated.ScrollView style={[styles.controlPanel, { opacity: fadeAnim }]}>
           <LinearGradient
             colors={['rgba(0,0,0,0.9)', 'rgba(30,30,30,0.97)']}
             style={styles.gradient}
@@ -343,15 +402,55 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
                 <Ionicons name="car" size={24} color="#FF3B30" />
                 <Text style={styles.vehicleText}>Guincho Pesado • {licensePlate}</Text>
               </View>
+
+              {/* Verificação do Motorista */}
+              {driverVerification && (
+                <View style={styles.driverVerification}>
+                  <View style={styles.driverHeader}>
+                    <Ionicons name="checkmark-circle" size={24} color="#FF3B30" />
+                    <Text style={styles.driverText}>
+                      Motorista Verificado
+                    </Text>
+                  </View>
+                  <Text style={styles.driverDetails}>
+                    {driverVerification.name} • {driverVerification.vehiclePlate}
+                  </Text>
+                  <View style={styles.ratingContainer}>
+                    <Ionicons name="star" size={16} color="#FFC107" />
+                    <Text style={styles.ratingText}>
+                      {driverVerification.rating}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.divider} />
+
+              {/* Histórico de Serviços */}
+              {serviceHistory.length > 0 && (
+                <View style={styles.serviceHistory}>
+                  <Text style={styles.historyTitle}>Último Serviço</Text>
+                  <View style={styles.historyItem}>
+                    <Text style={styles.historyDate}>
+                      {new Date(serviceHistory[0].timestamp).toLocaleDateString()}
+                    </Text>
+                    <Text style={styles.historyRating}>
+                      Avaliação: {serviceHistory[0].rating}/5
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
 
             {/* Ações Rápidas */}
-            <View style={styles.actionRow}>
+            <View style={styles.actionGrid}>
               <TouchableOpacity 
                 style={styles.actionButton}
                 onPress={handleVideoCall}
               >
-                <Ionicons name="videocam" size={28} color="#FFF" />
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="videocam" size={24} color="#FFF" />
+                </View>
                 <Text style={styles.buttonText}>Vídeo</Text>
               </TouchableOpacity>
 
@@ -359,20 +458,45 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
                 style={styles.actionButton}
                 onPress={handleShareLocation}
               >
-                <Ionicons name="share-social" size={28} color="#FFF" />
-                <Text style={styles.buttonText}>Compartilhar</Text>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="share-social" size={24} color="#FFF" />
+                </View>
+                <Text style={[styles.buttonText, {fontSize: 11}]}>Compartilhar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
                 style={styles.actionButton}
                 onPress={handleFirstAid}
               >
-                <Ionicons name="medkit" size={28} color="#FFF" />
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="medkit" size={24} color="#FFF" />
+                </View>
                 <Text style={styles.buttonText}>Primeiros Socorros</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.panicButton]}
+                onPress={handlePanicMode}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="warning" size={24} color="#FFF" />
+                </View>
+                <Text style={styles.buttonText}>Pânico</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, {width: '65%'}]}
+                onPress={verifyDriver}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="checkmark-circle" size={24} color="#FF3B30" />
+                </View>
+                <Text style={styles.buttonText}>Verificar Motorista</Text>
               </TouchableOpacity>
             </View>
           </LinearGradient>
-        </Animated.View>
+        </Animated.ScrollView>
+
     </SafeAreaView>
   );
 };
@@ -384,99 +508,100 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  background: {
+  backgroundImage: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 10 : 30,
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   backButton: {
-    padding: 5,
+    padding: 8,
   },
   headerTitle: {
     color: '#FFF',
     fontSize: 18,
     fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
   },
   emergencyCallButton: {
-    padding: 5,
+    backgroundColor: '#FFF',
+    padding: 8,
+    borderRadius: 20,
   },
   map: {
+    flex: 1,
     width: '100%',
-    height: height * 0.6,
   },
   loadingMap: {
-    height: height * 0.6,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   loadingText: {
     color: '#FFF',
-    marginTop: 10,
+    marginTop: 16,
+    fontSize: 16,
   },
   errorText: {
     color: '#FFF',
+    fontSize: 16,
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
   },
   retryButton: {
-    padding: 10,
     backgroundColor: '#FF3B30',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 8,
   },
   retryText: {
     color: '#FFF',
-    fontWeight: '600',
+    fontSize: 16,
   },
   marker: {
-    padding: 5,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#FFF',
     borderRadius: 20,
+    padding: 4,
   },
   driverMarker: {
-    backgroundColor: '#007AFF',
-    padding: 8,
+    backgroundColor: '#FF3B30',
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#FFF',
+    padding: 4,
   },
   controlPanel: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    borderRadius: 25,
+    bottom: 0,
+    left: 10,
+    right: 0,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
+    width: '95%',
+    top: 250
   },
   gradient: {
-    padding: 25,
+    padding: 16,
   },
   emergencyInfo: {
-    alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+    alignItems: 'center'
   },
   etaText: {
-    color: '#888',
+    color: '#FFF',
     fontSize: 14,
-    marginBottom: 5,
+    marginBottom: 4,
   },
   etaTime: {
     color: '#FFF',
-    fontSize: 36,
+    fontSize: 25,
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: 16,
   },
   distanceContainer: {
     flexDirection: 'row',
@@ -491,7 +616,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#333',
-    width: '80%',
+    width: '95%',
     marginVertical: 15,
   },
   vehicleInfo: {
@@ -503,20 +628,94 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
   },
-  actionRow: {
+  driverVerification: {
+    marginTop: 15,
+    padding: 12,
+    backgroundColor: 'rgba(255,59,48,0.1)',
+    borderRadius: 8,
+  },
+  driverHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  driverText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  driverDetails: {
+    color: '#FFF',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingText: {
+    color: '#FFF',
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  serviceHistory: {
+    marginTop: 15,
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+  },
+  historyTitle: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  historyItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 15,
+    alignItems: 'center',
+  },
+  historyDate: {
+    color: '#FFF',
+    fontSize: 14,
+  },
+  historyRating: {
+    color: '#FFF',
+    fontSize: 14,
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   actionButton: {
+    width: '30%',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    padding: 12,
     alignItems: 'center',
-    flex: 1,
-    padding: 10,
+    justifyContent: 'center',
+    minHeight: 100,
+  },
+  actionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  panicButton: {
+    backgroundColor: '#FF3B30',
   },
   buttonText: {
     color: '#FFF',
-    fontSize: 11,
-    marginTop: 8,
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
 

@@ -38,6 +38,16 @@ type ServiceDetailScreenProps = {
   userVehicles: Vehicle[]; // Add this line
 };
 
+interface Workshop {
+  id: string;
+  name: string;
+  address: string;
+  rating: number;
+  distance: number;
+  estimatedTime: number;
+  services: string[];
+}
+
 const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   service,
   onBack,
@@ -215,46 +225,68 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
             )}
 
             {/* Oficinas Próximas */}
-            {nearbyWorkshops.length > 0 && (
-              <View style={localStyles.section}>
-                <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
-                  <Ionicons name="business" size={20} color={colors.primary} /> Oficinas Próximas
-                </Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={localStyles.workshopsScroll}
-                >
-                  {nearbyWorkshops.map(workshop => (
-                    <TouchableOpacity 
-                      key={workshop.id} 
-                      style={[localStyles.workshopCard, { backgroundColor: colors.card }]}
-                    >
-                      <View style={localStyles.workshopHeader}>
-                        <Ionicons name="business" size={24} color={colors.primary} />
-                        <Text style={[localStyles.workshopName, { color: colors.text }]}>
-                          {workshop.name}
+            <View style={localStyles.section}>
+              <Text style={[localStyles.sectionTitle, { color: colors.text }]}>
+                <Ionicons name="business" size={20} color={colors.primary} /> Oficinas Próximas
+              </Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={localStyles.workshopsScroll}
+              >
+                {nearbyWorkshops.map((workshop: Workshop) => (
+                  <TouchableOpacity 
+                    key={workshop.id} 
+                    style={[
+                      localStyles.workshopCard, 
+                      { backgroundColor: colors.card }
+                    ]}
+                    onPress={() => {
+                      Alert.alert('Oficina Selecionada', `Você selecionou a oficina ${workshop.name}`);
+                    }}
+                  >
+                    <View style={localStyles.workshopHeader}>
+                      <Ionicons name="business" size={24} color={colors.primary} />
+                      <Text style={[localStyles.workshopName, { color: colors.text }]}>
+                        {workshop.name}
+                      </Text>
+                    </View>
+                    <Text style={[localStyles.workshopAddress, { color: colors.placeholder }]}>
+                      {workshop.address}
+                    </Text>
+                    <View style={localStyles.workshopDetails}>
+                      <View style={localStyles.workshopDetailItem}>
+                        <Ionicons name="navigate" size={16} color={colors.primary} />
+                        <Text style={[localStyles.workshopDetailText, { color: colors.text }]}>
+                          {workshop.distance} km
                         </Text>
                       </View>
-                      <View style={localStyles.workshopDetails}>
-                        <View style={localStyles.workshopDetailItem}>
-                          <Ionicons name="navigate" size={16} color={colors.primary} />
-                          <Text style={[localStyles.workshopDetailText, { color: colors.text }]}>
-                            {workshop.distance} km
-                          </Text>
-                        </View>
-                        <View style={localStyles.workshopDetailItem}>
-                          <Ionicons name="star" size={16} color="#FFC107" />
-                          <Text style={[localStyles.workshopDetailText, { color: colors.text }]}>
-                            {workshop.rating}
-                          </Text>
-                        </View>
+                      <View style={localStyles.workshopDetailItem}>
+                        <Ionicons name="star" size={16} color="#FFC107" />
+                        <Text style={[localStyles.workshopDetailText, { color: colors.text }]}>
+                          {workshop.rating}
+                        </Text>
                       </View>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+                      <View style={localStyles.workshopDetailItem}>
+                        <Ionicons name="time" size={16} color={colors.primary} />
+                        <Text style={[localStyles.workshopDetailText, { color: colors.text }]}>
+                          {workshop.estimatedTime} min
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={localStyles.workshopServices}>
+                      {(workshop.services || []).slice(0, 3).map((service: string, index: number) => (
+                        <View key={index} style={[localStyles.serviceTag, { backgroundColor: colors.primary + '10' }]}>
+                          <Text style={[localStyles.serviceTagText, { color: colors.primary }]}>
+                            {service}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
           </ScrollView>
 
           {/* Botões de Ação */}
@@ -521,7 +553,7 @@ const localStyles = StyleSheet.create({
     gap: 12,
   },
   workshopCard: {
-    width: 200,
+    width: 280,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
@@ -531,23 +563,43 @@ const localStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   workshopName: {
     fontSize: 16,
     fontWeight: '500',
     flex: 1,
   },
+  workshopAddress: {
+    fontSize: 14,
+    marginBottom: 12,
+  },
   workshopDetails: {
-    gap: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   workshopDetailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   workshopDetailText: {
     fontSize: 14,
+  },
+  workshopServices: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  serviceTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  serviceTagText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   modalFooter: {
     flexDirection: 'row',

@@ -1,15 +1,19 @@
 // Tipos e interfaces
 type TabType = 'Viagem' | 'Serviços';
-type PageType = 'Home' | 
-  'Serviços' | 
-  'Atividade' | 
-  'Conta' | 
-  'DetalhesServiço' | 
-  'DetalhesAtividade' | 
-  'DetalhesVeículo' | 
-  'Settings' | 
-  'Privacy' | 
-  'Map'| 'Payments' | 'Emergency' | 'Points';
+type PageType = 
+  | 'Home' 
+  | 'Serviços' 
+  | 'Atividade' 
+  | 'Conta' 
+  | 'DetalhesServiço' 
+  | 'DetalhesAtividade' 
+  | 'Settings' 
+  | 'Privacy' 
+  | 'Map' 
+  | 'Emergency' 
+  | 'Payments' 
+  | 'Points'
+  | 'DetalhesVeículo';
 interface SuggestionItem {
     id: number;
     name: string;
@@ -152,3 +156,19 @@ export type accountOptions = {
   title: string;
   screen: string;
 }[];
+
+export interface Workshop {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  phone: string;
+  rating: number;
+  distance: number;
+  services: string[];
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+}

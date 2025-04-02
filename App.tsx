@@ -36,6 +36,7 @@ import { mockServices, mockActivities, mockUserData, mockAccountData, mockSugges
 import NavigationButton from 'src/components/NavigationButton';
 import { servicePricing } from './src/config/Pricing';
 import PointsScreen from './src/pages/PointsScreen';
+import VehicleDetailScreen from './src/pages/VehicleDetailScreen';
 
 
 // Configurações responsivas
@@ -79,6 +80,7 @@ export default function App() {
   }>({});
   const [searchSuggestions, setSearchSuggestions] = useState<SuggestionItem[]>([]);
   const [userData, setUserData] = useState<UserData>(mockUserData);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   const services = mockServices;
   const activities = mockActivities;
@@ -164,7 +166,10 @@ export default function App() {
   };
 
   const renderVehicleItem = ({item}: {item: Vehicle}) => (
-    <TouchableOpacity style={[styles.vehicleCard, {backgroundColor: colors.card}]}>
+    <TouchableOpacity 
+      style={[styles.vehicleCard, {backgroundColor: colors.card}]}
+      onPress={() => handleVehicleSelect(item)}
+    >
       <View style={[styles.vehicleColor, {backgroundColor: item.color}]} />
       <View style={styles.vehicleInfo}>
         <Text style={[styles.vehicleModel, {color: colors.text}]}>{item.model}</Text>
@@ -368,6 +373,15 @@ export default function App() {
   };
   
 
+  const handleVehicleSelect = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setActivePage('DetalhesVeículo');
+  };
+
+  const handleVehicleBack = () => {
+    setActivePage('Conta');
+  };
+
   const renderContent = () => {
     switch (activePage) {
       case 'Home':
@@ -436,7 +450,8 @@ export default function App() {
               accountOptions={accountOptions}
               renderVehicleItem={renderVehicleItem}
               renderAccountOption={renderAccountOption}
-            onOptionSelect={handleOptionSelect}
+              onOptionSelect={handleOptionSelect}
+              onVehicleSelect={handleVehicleSelect}
             />
         );
       case 'DetalhesServiço':
@@ -508,6 +523,18 @@ export default function App() {
         );
       case 'Points':
         return <PointsScreen navigation={{ goBack: () => setActivePage('Conta') }} />;
+      case 'DetalhesVeículo':
+        return (
+          selectedVehicle && (
+            <VehicleDetailScreen
+              vehicle={selectedVehicle}
+              onBack={handleVehicleBack}
+              styles={styles}
+              colors={colors}
+              scale={scale}
+            />
+          )
+        );
       default:
         return (
             <View style={styles.otherPages}>

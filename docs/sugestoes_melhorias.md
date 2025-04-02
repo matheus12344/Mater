@@ -16,7 +16,7 @@
 - Botão de pânico com alerta para autoridades
 - Histórico detalhado com fotos e avaliações
 
-## 3. Funcionalidades Inteligentes
+## 3. Funcionalidades Inteligentes - FEITO
 - Previsão de preços baseada em histórico
 - Sugestão automática de oficinas próximas
 - Notificações de manutenção preventiva

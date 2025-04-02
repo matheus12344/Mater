@@ -10,7 +10,8 @@ import {
   TextInput,
   StyleSheet,
   Alert,
-  Dimensions
+  Dimensions,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker'; 
@@ -18,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as FileSystem from 'expo-file-system';
 import SmartFeaturesService from '../services/SmartFeaturesService';
+import * as Location from 'expo-location';
 
 interface Vehicle {
   id: string;
@@ -46,15 +48,21 @@ const guidelineBaseWidth = 375;
 const scale = (size: number) => (width / guidelineBaseWidth) * size;
 
 interface AccountScreenProps {
-  userData: UserData;
-  setUserData: (data: UserData) => void;
-  styles: any;            
-  colors: any;            
-  scale: (size: number) => number; 
-  accountOptions: AccountOption[];
-  renderVehicleItem: ({ item }: { item: Vehicle }) => JSX.Element;
-  renderAccountOption: ({ item }: { item: AccountOption }) => JSX.Element;
-  onOptionSelect: (screen: string) => void; // Nova prop para navegação
+  userData: any;
+  setUserData: (data: any) => void;
+  styles: any;
+  colors: any;
+  scale: (size: number) => number;
+  accountOptions: {
+    id: string;
+    title: string;
+    icon: string;
+    screen: string;
+  }[];
+  renderVehicleItem: ({ item }: { item: Vehicle }) => React.ReactNode;
+  renderAccountOption: ({ item }: { item: { id: string; title: string; icon: string; screen: string; } }) => React.ReactElement;
+  onOptionSelect: (screen: string) => void;
+  onVehicleSelect: (vehicle: Vehicle) => void;
 }
 
 const AccountScreen: React.FC<AccountScreenProps> = ({
@@ -66,7 +74,8 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
   accountOptions,
   renderVehicleItem,
   renderAccountOption,
-  onOptionSelect
+  onOptionSelect,
+  onVehicleSelect
 }) => {
 
   // Modais de edição
@@ -150,8 +159,8 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
           const vehicleId = userData.vehicles[0].id;
           await smartFeaturesService.scheduleMaintenance(vehicleId, 'oil');
           const quote = await smartFeaturesService.getInsuranceQuote(vehicleId);
-          setInsuranceQuote(quote);
-        }
+          setInsuranceQuote(quote); //pegando o seguro do veiculo: setInsuranceQuote(false)
+        } 
       } catch (error) {
         console.error('Erro ao carregar funcionalidades inteligentes:', error);
       }
@@ -192,21 +201,21 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
     }
   };
 
-  // Update user data and persist changes
-  const updateUserData = (data: Partial<UserData>) => {
-    const updatedUserData = { ...userData, ...data };
-    setUserData(updatedUserData);
-    saveUserData(updatedUserData);
-  };
-
   // Update vehicles and persist changes
   const updateVehicles = async (vehicles: Vehicle[]) => {
     try {
+      // Atualizar o estado global
       const updatedUserData = {
         ...userData,
         vehicles,
       };
+      setUserData(updatedUserData);
+      
+      // Salvar no AsyncStorage
+      await saveVehicles(vehicles);
       await saveUserData(updatedUserData);
+      
+      Alert.alert('Sucesso', 'Veículos atualizados com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar veículos:', error);
       Alert.alert('Erro', 'Não foi possível atualizar os veículos');
@@ -291,32 +300,42 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
   };
 
   // Salvar novo veículo
-  const handleSaveVehicle = () => {
+  const handleSaveVehicle = async () => {
     const plateRegex = /[A-Z]{3}[0-9][A-Z][0-9]{2}/i;
     if (!tempModel.trim() || !plateRegex.test(tempPlate)) {
       Alert.alert('Dados inválidos', 'Verifique modelo e placa');
       return;
     }
-    if (tempModel.trim() && tempPlate.trim()) {
+
+    try {
       const newVehicle: Vehicle = {
-        id: Math.random().toString(36).substr(2, 9), // ou use alguma lib
+        id: Math.random().toString(36).substr(2, 9),
         model: tempModel,
         plate: tempPlate,
         color: tempColor,
       };
+      
       const updatedVehicles = [...userData.vehicles, newVehicle];
-      updateVehicles(updatedVehicles);
+      await updateVehicles(updatedVehicles);
+      setAddVehicleModalVisible(false);
+      
+      // Limpar os campos temporários
+      setTempModel('');
+      setTempPlate('');
+      setTempColor('#000');
+    } catch (error) {
+      console.error('Erro ao adicionar veículo:', error);
+      Alert.alert('Erro', 'Não foi possível adicionar o veículo');
     }
-    setAddVehicleModalVisible(false);
   };
 
   // Delete vehicle
   const handleDeleteVehicle = (id: string) => {
-    const updatedVehicles = userData.vehicles.filter(vehicle => vehicle.id !== id);
+    const updatedVehicles = userData.vehicles.filter((vehicle: Vehicle) => vehicle.id !== id);
     updateVehicles(updatedVehicles);
   };
 
-  // Render vehicle item with swipe-to-delete
+  // Render vehicle item with swipe-to-delete and navigation
   const renderVehicleItemWithSwipe = ({ item }: { item: Vehicle }) => (
     <Swipeable
       renderRightActions={() => (
@@ -336,6 +355,261 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
   const handleOptionSelect = (screen: string) => {
     onOptionSelect(screen);
   };
+
+  // Estilos locais que dependem de colors
+  const localStyles = StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      padding: 16,
+    },
+    modalContainer: {
+      borderRadius: 12,
+      padding: 16,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      marginBottom: 12,
+    },
+    modalInput: {
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      marginBottom: 12,
+    },
+    modalButtonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    modalButton: {
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+    },
+    deleteButton: {
+      backgroundColor: 'red',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 80,
+      height: '90%',
+      borderRadius: 10,
+    },
+    deleteButtonText: {
+      color: '#fff',
+      fontWeight: 'bold',
+    },
+    pointsButton: {
+      marginHorizontal: scale(10),
+      marginBottom: scale(25),
+      borderRadius: scale(16),
+      padding: scale(16),
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 5,
+      width: '95%',
+    },
+    pointsButtonContent: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    pointsButtonLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    pointsButtonTextContainer: {
+      marginLeft: scale(12),
+    },
+    pointsButtonTitle: {
+      color: '#FFFFFF',
+      fontSize: scale(12),
+      fontWeight: '600',
+      marginBottom: scale(2),
+    },
+    pointsButtonSubtitle: {
+      color: '#FFFFFF',
+      fontSize: scale(11),
+      opacity: 0.9,
+    },
+    pointsButtonRight: {
+      alignItems: 'flex-end',
+    },
+    pointsButtonValue: {
+      color: '#FFFFFF',
+      fontSize: scale(20),
+      fontWeight: 'bold',
+      marginBottom: scale(2),
+    },
+    pointsButtonLabel: {
+      color: '#FFFFFF',
+      fontSize: scale(12),
+      opacity: 0.9,
+    },
+    sectionContainer: {
+      marginTop: 20,
+      paddingHorizontal: 16,
+    },
+    maintenanceCard: {
+      backgroundColor: '#fff',
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 8,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    maintenanceHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    maintenanceTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      marginLeft: 8,
+    },
+    maintenanceDate: {
+      fontSize: 14,
+    },
+    insuranceCard: {
+      backgroundColor: '#fff',
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 8,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    insuranceHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    insuranceTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      marginLeft: 8,
+    },
+    insurancePrice: {
+      fontSize: 24,
+      fontWeight: '700',
+      marginBottom: 4,
+    },
+    insuranceValidity: {
+      fontSize: 14,
+    },
+    noInsuranceCard: {
+      borderWidth: 1,
+      borderColor: '#FF6B6B',
+      backgroundColor: '#FFF5F5',
+    },
+    insuranceDescription: {
+      fontSize: 14,
+      marginBottom: 12,
+    },
+    insuranceFeatures: {
+      marginBottom: 16,
+    },
+    featureItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    featureText: {
+      marginLeft: 8,
+      fontSize: 14,
+    },
+    insuranceCTA: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#FFF',
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.primary,
+    },
+    insuranceCTAText: {
+      fontSize: 16,
+      fontWeight: '600',
+      marginRight: 8,
+    },
+    workshopCard: {
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 8,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    workshopHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    workshopName: {
+      fontSize: 18,
+      fontWeight: '600',
+      marginLeft: 8,
+    },
+    workshopAddress: {
+      fontSize: 14,
+      marginBottom: 8,
+    },
+    workshopInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    workshopRating: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    workshopRatingText: {
+      marginLeft: 4,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    workshopDistance: {
+      fontSize: 14,
+    },
+    workshopServices: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    serviceTag: {
+      backgroundColor: 'rgba(0, 122, 255, 0.1)',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 4,
+    },
+    serviceTagText: {
+      fontSize: 12,
+      fontWeight: '500',
+    },
+  });
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -425,11 +699,11 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
         )}
 
         {/* Seção de Seguro */}
-        {insuranceQuote && (
-          <View style={[localStyles.sectionContainer, {marginTop: -20, marginBottom: 10}]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Seguro do Veículo
-            </Text>
+        <View style={[localStyles.sectionContainer, {marginTop: -20, marginBottom: 10}]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Seguro do Veículo
+          </Text>
+          {insuranceQuote ? (
             <View style={localStyles.insuranceCard}>
               <View style={localStyles.insuranceHeader}>
                 <Ionicons name="shield-checkmark-outline" size={24} color="#9C27B0" />
@@ -444,8 +718,49 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
                 Validade: {insuranceQuote.validity}
               </Text>
             </View>
-          </View>
-        )}
+          ) : (
+            <TouchableOpacity 
+              style={[localStyles.insuranceCard, localStyles.noInsuranceCard]}
+              onPress={() => handleOptionSelect('SeguroPro')}
+            >
+              <View style={localStyles.insuranceHeader}>
+                <Ionicons name="shield-outline" size={24} color="#FF6B6B" />
+                <Text style={[localStyles.insuranceTitle, { color: colors.text }]}>
+                  SeguroPro
+                </Text>
+              </View>
+              <Text style={[localStyles.insuranceDescription, { color: colors.placeholder }]}>
+                Proteja seu veículo com o melhor seguro do mercado
+              </Text>
+              <View style={localStyles.insuranceFeatures}>
+                <View style={localStyles.featureItem}>
+                  <Ionicons name="checkmark-circle-outline" size={16} color="#4CAF50" />
+                  <Text style={[localStyles.featureText, { color: colors.text }]}>
+                    Cobertura completa
+                  </Text>
+                </View>
+                <View style={localStyles.featureItem}>
+                  <Ionicons name="checkmark-circle-outline" size={16} color="#4CAF50" />
+                  <Text style={[localStyles.featureText, { color: colors.text }]}>
+                    Assistência 24h
+                  </Text>
+                </View>
+                <View style={localStyles.featureItem}>
+                  <Ionicons name="checkmark-circle-outline" size={16} color="#4CAF50" />
+                  <Text style={[localStyles.featureText, { color: colors.text }]}>
+                    Preços especiais
+                  </Text>
+                </View>
+              </View>
+              <View style={localStyles.insuranceCTA}>
+                <Text style={[localStyles.insuranceCTAText, { color: colors.primary }]}>
+                  Contratar Agora
+                </Text>
+                <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Opções da Conta */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -587,8 +902,8 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
   );
 };
 
-// Estilos locais para os modais e swipe
-const localStyles = StyleSheet.create({
+// Estilos locais que não dependem de colors
+const baseStyles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

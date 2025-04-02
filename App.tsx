@@ -10,10 +10,12 @@ import {
   SafeAreaView,
   Animated,
   TouchableWithoutFeedback,
-  Vibration
+  Vibration,
+  Alert
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeTabContent from './src/components/HomeTabContent';
 import AccountScreen from './src/pages/AccountScreen';
 import ActivityScreen from './src/pages/ActivityScreen';
@@ -81,6 +83,23 @@ export default function App() {
   const activities = mockActivities;
   const accountOptions = mockAccountData;
   const suggestions = mockSuggestions
+
+  // Carregar dados do usuário do AsyncStorage
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const storedUserData = await AsyncStorage.getItem('userData');
+        if (storedUserData) {
+          const parsedData = JSON.parse(storedUserData);
+          setUserData(parsedData);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do usuário:', error);
+        Alert.alert('Erro', 'Não foi possível carregar os dados do perfil');
+      }
+    };
+    loadUserData();
+  }, []);
 
   const fetchOSMSuggestions = async (searchText: string): Promise<SuggestionItem[]> => {
     try {

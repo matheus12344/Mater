@@ -74,16 +74,38 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
   const [tempPlate, setTempPlate] = useState('');
   const [tempColor, setTempColor] = useState('#000');
 
-  // Load user data from AsyncStorage
+  // Função para salvar a imagem no cache
+  const saveImageToCache = async (imageUri: string) => {
+    try {
+      const fileName = imageUri.split('/').pop();
+      const newPath = `${FileSystem.cacheDirectory}profile_${fileName}`;
+      
+      const fileInfo = await FileSystem.getInfoAsync(newPath);
+      if (!fileInfo.exists) {
+        await FileSystem.copyAsync({
+          from: imageUri,
+          to: newPath
+        });
+      }
+      return newPath;
+    } catch (error) {
+      console.error('Erro ao salvar imagem no cache:', error);
+      return imageUri;
+    }
+  };
+
+  // Carregar dados do usuário do AsyncStorage
   useEffect(() => {
     const loadUserData = async () => {
       try {
         const storedUserData = await AsyncStorage.getItem('userData');
         if (storedUserData) {
-          setUserData(JSON.parse(storedUserData));
+          const parsedData = JSON.parse(storedUserData);
+          setUserData(parsedData);
         }
       } catch (error) {
-        console.error('Failed to load user data:', error);
+        console.error('Erro ao carregar dados do usuário:', error);
+        Alert.alert('Erro', 'Não foi possível carregar os dados do perfil');
       }
     };
     loadUserData();
@@ -107,18 +129,13 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
     loadVehicles();
   }, []);
 
-  // Save user data to AsyncStorage
+  // Função para salvar dados do usuário
   const saveUserData = async (data: UserData) => {
     try {
+      // Salvar no AsyncStorage
       await AsyncStorage.setItem('userData', JSON.stringify(data));
-    } catch (error) {
-      console.error('Failed to save user data:', error);
-    }
-  };
-
-  // Save user data to a .txt file
-  const saveUserDataToFile = async (data: UserData) => {
-    try {
+      
+      // Salvar também em um arquivo para backup
       const fileUri = `${FileSystem.documentDirectory}userProfile.txt`;
       const fileContent = `
         Name: ${data.name}
@@ -127,9 +144,12 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
         Vehicles: ${JSON.stringify(data.vehicles, null, 2)}
       `;
       await FileSystem.writeAsStringAsync(fileUri, fileContent);
-      console.log('User data saved to file:', fileUri);
+
+      // Atualizar o estado global
+      setUserData(data);
     } catch (error) {
-      console.error('Failed to save user data to file:', error);
+      console.error('Erro ao salvar dados do usuário:', error);
+      Alert.alert('Erro', 'Não foi possível salvar as alterações');
     }
   };
 
@@ -147,16 +167,20 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
     const updatedUserData = { ...userData, ...data };
     setUserData(updatedUserData);
     saveUserData(updatedUserData);
-    saveUserDataToFile(updatedUserData); // Save to file as well
   };
 
   // Update vehicles and persist changes
-  const updateVehicles = (vehicles: Vehicle[]) => {
-    setUserData({
-      ...userData,
-      vehicles,
-    });
-    saveVehicles(vehicles);
+  const updateVehicles = async (vehicles: Vehicle[]) => {
+    try {
+      const updatedUserData = {
+        ...userData,
+        vehicles,
+      };
+      await saveUserData(updatedUserData);
+    } catch (error) {
+      console.error('Erro ao atualizar veículos:', error);
+      Alert.alert('Erro', 'Não foi possível atualizar os veículos');
+    }
   };
 
   // Abrir modal de editar perfil
@@ -167,18 +191,65 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
     setEditProfileModalVisible(true);
   };
 
+  // Função para escolher imagem da galeria
+  const handlePickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.status !== 'granted') {
+        Alert.alert('Permissão necessária', 'É necessário acesso à galeria para alterar a foto');
+        return;
+      }
+
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!pickerResult.canceled) {
+        const selectedImageUri = pickerResult.assets[0].uri;
+        const cachedImageUri = await saveImageToCache(selectedImageUri);
+        
+        // Atualizar o estado temporário
+        setTempProfileImage(cachedImageUri);
+        
+        // Atualizar os dados do usuário
+        const updatedUserData = {
+          ...userData,
+          profileImage: cachedImageUri
+        };
+        await saveUserData(updatedUserData);
+        Alert.alert('Sucesso', 'Foto de perfil atualizada com sucesso!');
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem');
+    }
+  };
+
   // Salvar edição do perfil
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!tempName.trim() || !tempEmail.includes('@')) {
       Alert.alert('Dados inválidos', 'Verifique nome e e-mail');
       return;
     }
-    updateUserData({
-      name: tempName,
-      email: tempEmail,
-      profileImage: tempProfileImage,
-    });
-    setEditProfileModalVisible(false);
+
+    try {
+      const updatedUserData = {
+        ...userData,
+        name: tempName,
+        email: tempEmail,
+        profileImage: tempProfileImage,
+      };
+      
+      await saveUserData(updatedUserData);
+      setEditProfileModalVisible(false);
+      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+      Alert.alert('Erro', 'Não foi possível salvar as alterações');
+    }
   };
 
   // Abrir modal de adicionar veículo
@@ -187,33 +258,6 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
     setTempPlate('');
     setTempColor(`#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`); //toda vez que adicionarmos um carro novo, apareça uma cor aleatória
     setAddVehicleModalVisible(true);
-  };
-
-  // Função para escolher imagem da galeria
-  const handlePickImage = async () => {
-    // Request permission to access the gallery
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.status !== 'granted') {
-      alert("Permissão de acesso à galeria é necessária para alterar a foto!");
-      return;
-    }
-
-    // Open the gallery
-    const pickerResult = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Corrected to use MediaTypeOptions
-      allowsEditing: true,
-      aspect: [1, 1], // Adjust the aspect ratio if needed
-      quality: 0.8,
-    });
-
-    // If the user doesn't cancel, save the URI
-    if (!pickerResult.canceled) {
-      const selectedImageUri = pickerResult.assets[0].uri;
-
-      // Update the temporary state and persist the change
-      setTempProfileImage(selectedImageUri);
-      updateUserData({ profileImage: selectedImageUri }); // Ensure this updates AsyncStorage
-    }
   };
 
   // Salvar novo veículo

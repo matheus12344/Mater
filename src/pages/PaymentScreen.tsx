@@ -107,7 +107,7 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ route, onBack }) => {
     >
       <Animated.View 
         style={[
-          tailwind('w-full max-w-[500px] mx-auto rounded-2xl p-6 shadow mb-5'),
+          tailwind('w-full max-w-[500px] mx-auto rounded-2xl p-6 shadow-lg mb-5'),
           { 
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }]

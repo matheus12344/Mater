@@ -13,6 +13,7 @@ import { ActivityItem, Vehicle } from '../types';
 import * as Location from 'expo-location';
 import { useActivities } from '../context/ActivityContext';
 import SmartFeaturesService from '../services/SmartFeaturesService';
+import { scale } from 'react-native-size-matters';
 
 export interface ServiceItem {
   id: string;
@@ -20,22 +21,25 @@ export interface ServiceItem {
   title: string;
   description: string;
   color: string;
-  vehicleId?: string; // Novo campo
-  licensePlate?: string; // Novo campo
-  location?: { // Novo campo
+  vehicleId?: string;
+  licensePlate?: string;
+  location?: {
     latitude: number;
     longitude: number;
     address?: string;
   };
+  driverName?: string;
+  driverPhoto?: string;
 }
 
 type ServiceDetailScreenProps = {
   service: ServiceItem;
-  onBack: () => void;
+  onChat: (event?: any, navigationParams?: { type: string; params: any }) => void;
+  onBack: (event?: any, navigationParams?: { type: string; params: any }) => void;
   styles: any;
   colors: any;
   scale: (size: number) => number;
-  userVehicles: Vehicle[]; // Add this line
+  userVehicles: Vehicle[];
 };
 
 interface Workshop {
@@ -50,11 +54,12 @@ interface Workshop {
 
 const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   service,
-  onBack,
+  onChat,
   styles,
   colors,
   scale,
   userVehicles,
+  onBack,
 }) => {
   // Estado para controlar a visibilidade do modal
   const [requestModalVisible, setRequestModalVisible] = useState(false);
@@ -438,6 +443,27 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
             Solicitar
           </Text>
         </TouchableOpacity>
+
+        {/* Botão de Chat */}
+        <TouchableOpacity 
+          style={[
+            styles.chatButton,
+            { 
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              marginTop: scale(12)
+            }
+          ]}
+          onPress={() => {
+            onChat(0);
+            // O componente pai deve lidar com a navegação para o chat
+          }}
+        >
+          <Ionicons name="chatbubble-ellipses" size={scale(20)} color={colors.primary} />
+          <Text style={[styles.chatButtonText, { color: colors.text }]}>
+            Falar com o Motorista
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* MODAL de Confirmação de Solicitação */}
@@ -614,6 +640,19 @@ const localStyles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
+  },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: scale(12),
+    borderRadius: scale(12),
+    borderWidth: 1,
+    gap: scale(8),
+  },
+  chatButtonText: {
+    fontSize: scale(16),
+    fontWeight: '500',
   },
 });
 

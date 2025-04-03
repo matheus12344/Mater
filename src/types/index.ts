@@ -13,7 +13,8 @@ type PageType =
   | 'Emergency' 
   | 'Payments' 
   | 'Points'
-  | 'DetalhesVeículo';
+  | 'DetalhesVeículo'
+  | 'Chat';
 interface SuggestionItem {
     id: number;
     name: string;

@@ -414,7 +414,7 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChang
         {/* Marcador de localização atual */}
         {currentLocation && (
           <Marker coordinate={currentLocation}>
-            <View style={[styles.markerCurrent, { backgroundColor: colors.primary }]}>
+            <View style={[styles.markerCurrent, { backgroundColor: colors.card }]}>
               <Ionicons name="navigate" size={20} color="blue" />
             </View>
           </Marker>
@@ -482,9 +482,9 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChang
           onPress={() => handleSearch(searchQuery)}
         >
           {isLoading ? (
-            <ActivityIndicator color="black" size={20} />
+            <ActivityIndicator color="white" size={20} />
             ) : (
-                  <Ionicons name="search" size={20} color="black" />
+                  <Ionicons name="search" size={20} color="white" />
          )}
         </TouchableOpacity>
       </LinearGradient>

@@ -37,6 +37,7 @@ import NavigationButton from 'src/components/NavigationButton';
 import { servicePricing } from './src/config/Pricing';
 import PointsScreen from './src/pages/PointsScreen';
 import VehicleDetailScreen from './src/pages/VehicleDetailScreen';
+import ChatScreen from './src/pages/ChatScreen';
 
 
 // Configurações responsivas
@@ -294,6 +295,9 @@ export default function App() {
     const handleBackHome = () => {
       setActivePage('Home');
     };
+    const handleChat = () => {
+      setActivePage('Chat');
+    };
 
   // Carregar histórico
   useEffect(() => {
@@ -460,6 +464,7 @@ export default function App() {
             <ServiceDetailScreen
               service={selectedService}
               onBack={handleBack}
+              onChat={handleChat}
               styles={styles}
               colors={colors}
               scale={scale}
@@ -534,6 +539,18 @@ export default function App() {
               scale={scale}
             />
           )
+        );
+      case 'Chat':
+        return (
+          <ChatScreen
+            navigation={{ goBack: () => setActivePage('Home') }}
+            route={{
+              params: {
+                driverName: 'João Silva',
+                driverPhoto: 'https://via.placeholder.com/150'
+              }
+            }}
+          />
         );
       default:
         return (

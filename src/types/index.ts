@@ -1,5 +1,5 @@
 // Tipos e interfaces
-type TabType = 'Viagem' | 'Serviços';
+type TabType = 'Viagem' | 'Serviços' | 'Atividade' | 'Conta';
 type PageType = 
   | 'Home' 
   | 'Serviços' 

@@ -29,9 +29,10 @@ interface MapScreenProps {
   services: ServiceItem[];
   onSearchTextChange: (text: string) => Promise<void>;// Nova prop para buscar sugestões
   onSelectSuggestion: (item: SuggestionItem) => void; // Nova prop para seleção
+  onServiceSelect: (service: ServiceItem) => void; // Add this prop
 }
 
-const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChange, onSelectSuggestion}) => {
+const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChange, onSelectSuggestion, onServiceSelect}) => {
   const { colors, theme } = useTheme();
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState({
@@ -375,9 +376,19 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChang
     const { colors } = useTheme();
     const pricing = servicePricing[service.id];
     const price = calculateServicePrice(service.id, distance);
-  
+
     return (
-      <TouchableOpacity style={[styles.priceCard, { backgroundColor: '#fff' }]} onPress={() => console.log('Selecionado:', service)}>
+      <TouchableOpacity 
+        style={[styles.priceCard, { backgroundColor: '#fff' }]} 
+        onPress={() => {
+          // Pass the service and price information to the parent
+          onServiceSelect({
+            ...service,
+            price: price,
+            distance: distance
+          });
+        }}
+      >
         <View style={styles.serviceHeader}>
           <Ionicons name={service.icon as any} size={24} color={service.color} />
           <Text style={[styles.serviceName, { color: colors.text }]}>{service.title}</Text>

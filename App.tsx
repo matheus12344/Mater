@@ -26,6 +26,7 @@ import ActivityDetailScreen from './src/pages/ActivityDetailScreen';
 import { ActivityProvider } from './src/context/ActivityContext';
 import SettingsScreen from './src/pages/SettingsScreen';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import PrivacyPolicyScreen from './src/pages/PrivacyScreen';
 import MapScreen from './src/pages/MapScreen';
 import 'react-native-gesture-handler';
@@ -489,13 +490,14 @@ export default function App() {
             <MapScreen 
               key="map" 
               route={{ params: { 
-                  searchText: mapSearchParams.searchText,
-                  coordinates: mapSearchParams.coordinates 
-                } 
-              }} 
+                searchText: mapSearchParams.searchText,
+                coordinates: mapSearchParams.coordinates 
+              } 
+            }} 
               services={services}
               onSearchTextChange={handleSearchTextChange}
               onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
+              onServiceSelect={handleServiceSelect}
             />
         );
       case 'Emergency':
@@ -562,50 +564,52 @@ export default function App() {
   };
 
   return (
-    <ThemeProvider>
-      <ActivityProvider>
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
+    <AccessibilityProvider>
+      <ThemeProvider>
+        <ActivityProvider>
+          <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
 
-          {renderContent()}
+            {renderContent()}
 
-          <View style={[styles.footer, { borderTopColor: colors.border }]}>
-            <NavigationButton
-              page="Home"
-              label="Home"
-              icon="home"
-              activePage={activePage}
-              theme={theme}
-              onPress={() => setActivePage('Home')}
-            />
-            <NavigationButton
-              page="Serviços"
-              label="Serviços"
-              icon="tools"
-              activePage={activePage}
-              theme={theme}
-              onPress={() => setActivePage('Serviços')}
-            />
-            <NavigationButton
-              page="Atividade"
-              label="Atividade"
-              icon="clipboard-list"
-              activePage={activePage}
-              theme={theme}
-              onPress={() => setActivePage('Atividade')}
-            />
-            <NavigationButton
-              page="Conta"
-              label="Conta"
-              icon="account"
-              activePage={activePage}
-              theme={theme}
-              onPress={() => setActivePage('Conta')}
-            />
-            
-          </View>
-        </SafeAreaView>
-      </ActivityProvider>
-    </ThemeProvider>
+            <View style={[styles.footer, { borderTopColor: colors.border }]}>
+              <NavigationButton
+                page="Home"
+                label="Home"
+                icon="home"
+                activePage={activePage}
+                theme={theme}
+                onPress={() => setActivePage('Home')}
+              />
+              <NavigationButton
+                page="Serviços"
+                label="Serviços"
+                icon="tools"
+                activePage={activePage}
+                theme={theme}
+                onPress={() => setActivePage('Serviços')}
+              />
+              <NavigationButton
+                page="Atividade"
+                label="Atividade"
+                icon="clipboard-list"
+                activePage={activePage}
+                theme={theme}
+                onPress={() => setActivePage('Atividade')}
+              />
+              <NavigationButton
+                page="Conta"
+                label="Conta"
+                icon="account"
+                activePage={activePage}
+                theme={theme}
+                onPress={() => setActivePage('Conta')}
+              />
+              
+            </View>
+          </SafeAreaView>
+        </ActivityProvider>
+      </ThemeProvider>
+    </AccessibilityProvider>
   );
 }

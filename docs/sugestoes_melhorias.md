@@ -22,7 +22,7 @@
 - Notificações de manutenção preventiva
 - Integração com seguradoras
 
-## 4. Recursos de Comunicação
+## 4. Recursos de Comunicação - FEITO
 - Chat em tempo real com motorista
 - Sistema de áudio/vídeo para avaliação remota
 - Compartilhamento de fotos do veículo

@@ -28,7 +28,11 @@ type EmergencyScreenRouteProp = {
     onback: (index: number) => void;
 };
 
-const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
+type EmergencyScreenProps = {
+  route: EmergencyScreenRouteProp;
+};
+
+const EmergencyScreen: React.FC<EmergencyScreenProps> = ({route}) => {
   const [eta, setEta] = useState('8 min');
   const fadeAnim = useState(new Animated.Value(0))[0];
   const [driverPosition, setDriverPosition] = useState({
@@ -298,6 +302,84 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
     );
   }
 
+  const renderMap = () => {
+    if (Platform.OS === 'web') {
+      return (
+        <View style={styles.webMapPlaceholder}>
+          <Text style={styles.webMapText}>Mapa não disponível na versão web</Text>
+          <Text style={styles.webMapSubtext}>Por favor, use o aplicativo móvel para acessar o mapa</Text>
+        </View>
+      );
+    }
+
+    if (!locationPermissionGranted) {
+      return (
+        <View style={styles.loadingMap}>
+          <Text style={styles.errorText}>
+            Permissão de localização não concedida.
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => Linking.openSettings()}
+          >
+            <Text style={styles.retryText}>Abrir Configurações</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (!currentLocation) {
+      return (
+        <View style={styles.loadingMap}>
+          <ActivityIndicator size="large" color="#FFF" />
+          <Text style={styles.loadingText}>Obtendo sua localização...</Text>
+        </View>
+      );
+    }
+
+    return (
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        }}
+        showsUserLocation
+        showsMyLocationButton
+        showsCompass
+      >
+        <Marker
+          coordinate={currentLocation}
+          anchor={{ x: 0.5, y: 0.5 }}
+        >
+          <Animated.View style={[styles.marker, { opacity: fadeAnim }]}>
+            <Ionicons name="alert-circle" size={32} color="#FF3B30" />
+          </Animated.View>
+        </Marker>
+
+        <Marker
+          coordinate={driverPosition}
+          anchor={{ x: 0.5, y: 0.5 }}
+        >
+          <View style={styles.driverMarker}>
+            <Ionicons name="car-sport" size={28} color="#FFF" />
+          </View>
+        </Marker>
+
+        {currentLocation && driverPosition && (
+          <Polyline
+            coordinates={[currentLocation, driverPosition]}
+            strokeColor="#FF3B30"
+            strokeWidth={3}
+            lineDashPattern={[1]}
+          />
+        )}
+      </MapView>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
     
@@ -319,66 +401,7 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
         </View>
 
         {/* Mapa */}
-        {locationPermissionGranted ? (
-          currentLocation ? (
-            <MapView
-              style={styles.map}
-              initialRegion={{
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
-              }}
-              showsUserLocation
-              showsMyLocationButton
-              showsCompass
-            >
-              <Marker
-                coordinate={currentLocation}
-                anchor={{ x: 0.5, y: 0.5 }}
-              >
-                <Animated.View style={[styles.marker, { opacity: fadeAnim }]}>
-                  <Ionicons name="alert-circle" size={32} color="#FF3B30" />
-                </Animated.View>
-              </Marker>
-
-              <Marker
-                coordinate={driverPosition}
-                anchor={{ x: 0.5, y: 0.5 }}
-              >
-                <View style={styles.driverMarker}>
-                  <Ionicons name="car-sport" size={28} color="#FFF" />
-                </View>
-              </Marker>
-
-              {currentLocation && driverPosition && (
-                <Polyline
-                  coordinates={[currentLocation, driverPosition]}
-                  strokeColor="#FF3B30"
-                  strokeWidth={3}
-                  lineDashPattern={[1]}
-                />
-              )}
-            </MapView>
-          ) : (
-            <View style={styles.loadingMap}>
-              <ActivityIndicator size="large" color="#FFF" />
-              <Text style={styles.loadingText}>Obtendo sua localização...</Text>
-            </View>
-          )
-        ) : (
-          <View style={styles.loadingMap}>
-            <Text style={styles.errorText}>
-              Permissão de localização não concedida.
-            </Text>
-            <TouchableOpacity 
-              style={styles.retryButton}
-              onPress={() => Linking.openSettings()}
-            >
-              <Text style={styles.retryText}>Abrir Configurações</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {renderMap()}
 
         {/* Painel de Controle Flutuante */}
         <Animated.ScrollView style={[styles.controlPanel, { opacity: fadeAnim }]}>
@@ -715,6 +738,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  webMapPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  webMapText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFF',
+    marginBottom: 10,
+  },
+  webMapSubtext: {
+    fontSize: 14,
+    color: '#FFF',
+    textAlign: 'center',
   },
 });
 

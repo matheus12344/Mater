@@ -69,4 +69,28 @@ export interface NavigationButtonProps {
   activePage: PageType;
   theme: 'light' | 'dark';
   onPress: () => void;
-} 
+}
+
+export interface RootStackParamList {
+  [key: string]: undefined | {
+    service: string;
+    amount: number;
+    serviceDetails?: Record<string, any>;
+  } | {
+    id: string;
+  };
+  Payment: {
+    service: string;
+    amount: number;
+    serviceDetails?: Record<string, any>;
+  };
+  ActivityDetail: {
+    id: string;
+  };
+  VehicleDetail: {
+    id: string;
+  };
+  ServiceDetail: {
+    id: string;
+  };
+}

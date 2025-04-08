@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text, ScrollView, FlatList, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text, ScrollView, FlatList } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useTheme } from '../context/ThemeContext';
@@ -412,17 +412,8 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChang
     );
   };
 
-  const renderMap = () => {
-    if (Platform.OS === 'web') {
-      return (
-        <View style={styles.webMapPlaceholder}>
-          <Text style={styles.webMapText}>Mapa não disponível na versão web</Text>
-          <Text style={styles.webMapSubtext}>Por favor, use o aplicativo móvel para acessar o mapa</Text>
-        </View>
-      );
-    }
-
-    return (
+  return (
+    <SafeAreaView style={styles.container}>
       <MapView
         ref={mapRef}
         style={[styles.map, StyleSheet.absoluteFillObject]}
@@ -452,7 +443,7 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChang
         {/* Linha da rota */}
         {routeCoordinates.length > 0 && isValidCoordinate(routeCoordinates[0]) && (
           <Polyline
-            zIndex={999}
+            zIndex={999} // Garante que a rota fique acima de outros elementos
             coordinates={routeCoordinates}
             strokeWidth={4}
             strokeColor={'#007AFF'}
@@ -460,12 +451,6 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChang
           />
         )}
       </MapView>
-    );
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      {renderMap()}
 
       {/* Adicione coordenadas de debug */}
       {__DEV__ && destination && (
@@ -773,23 +758,6 @@ const styles = StyleSheet.create({
     padding: 15,
     textAlign: 'center',
     color: '#888'
-  },
-  webMapPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f3f5',
-  },
-  webMapText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
-  },
-  webMapSubtext: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
   },
 });
 

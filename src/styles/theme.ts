@@ -112,11 +112,14 @@ export const createStyles = (theme: 'light' | 'dark') => StyleSheet.create({
     marginRight: scale(15),
     overflow: 'hidden',
   },
+ 
   suggestionImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+    filter: 'brightness(1.2)', // Adjust brightness to make the image lighter
   },
+  
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',

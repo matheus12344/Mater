@@ -364,7 +364,7 @@ export default function App() {
 
   const renderSuggestion = ({ item }: { item: SuggestionItem }) => (
     <TouchableOpacity style={styles.suggestionContainer}>
-      <Image source={{ uri: item.image }} style={styles.suggestionImage} />
+      <Image source={item.image } style={styles.suggestionImage} />
       <View style={styles.imageOverlay} />
       <Text style={styles.suggestionTitle}>{item.title}</Text>
     </TouchableOpacity>

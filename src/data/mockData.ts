@@ -1,4 +1,4 @@
-import { ServiceItem, ActivityItem, UserData, accountOptions, SuggestionItem } from '../types/index';
+import { ServiceItem, ActivityItem, UserData, accountOptions, SuggestionItem, CommunityPost } from '../types/index';
 import guinchoRapido from '../assets/guinchoRapido.png';
 import emergency24h from '../assets/emergency24h.jpg';
 import cargaPesada from '../assets/cargaPesada.jpg';
@@ -118,6 +118,7 @@ export const mockUserData: UserData = {
       color: '#4ECDC4',
     },
   ],
+  referralCode: '1234567890',
 }; 
 
 export const mockAccountData: accountOptions = [
@@ -126,6 +127,19 @@ export const mockAccountData: accountOptions = [
   { id: '3', icon: 'card', title: 'Pagamentos', screen: 'Payments' },
   { id: '4', icon: 'help-circle', title: 'Ajuda', screen: 'Help' },
   { id: '5', icon: 'log-out', title: 'Sair', screen: 'Logout' },
+  { id: '6', icon: 'person', title: 'Indicar Amigos', screen: 'Referral'}
+];
+
+export const mockCommunityPosts: CommunityPost[] = [
+  {
+    id: '1',
+    user: mockUserData,
+    content: 'Ótima rota pela marginal hoje!',
+    likes: 42,
+    comments: [],
+    routeSnapshot: 'https://example.com/route-map.png',
+    timestamp: new Date()
+  }
 ];
 
 export const mockSuggestions: SuggestionItem[] = [

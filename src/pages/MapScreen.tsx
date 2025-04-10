@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text, ScrollView, FlatList } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import { View, StyleSheet, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Text, ScrollView, FlatList, Share } from 'react-native';
+import MapView, { LatLng, Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useTheme } from '../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -119,6 +119,76 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChang
       Alert.alert('🌐 Erro de conexão', 'Verifique sua internet e tente novamente');
       return null;
     }
+  };
+
+  const calculateDistance = (coordinates: Coordinates[]) => {
+    if (coordinates.length < 2) return 0;
+    
+    let totalDistance = 0;
+    for (let i = 0; i < coordinates.length - 1; i++) {
+      const distance = Math.sqrt( 
+        (coordinates[i].latitude - coordinates[i + 1].latitude) ** 2 +
+        (coordinates[i].longitude - coordinates[i + 1].longitude) ** 2
+      );
+      totalDistance += distance;
+    }
+    return totalDistance; 
+  };
+  
+
+  const generateRouteImage = async (coordinates: LatLng[], mapRef: React.RefObject<MapView>) => {
+    try {
+      if (!mapRef.current) {
+        throw new Error('Map reference not available');
+      }
+  
+      // Ajusta o mapa para as coordenadas
+      await mapRef.current.fitToCoordinates(coordinates, {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: false,
+      });
+  
+      // Captura o snapshot
+      const snapshot = await mapRef.current.takeSnapshot({
+        width: 300,    // Largura da imagem
+        height: 200,   // Altura da imagem
+        format: 'png', // Formato da imagem
+        quality: 0.8,  // Qualidade (0 a 1)
+        result: 'base64' // Tipo de retorno
+      });
+  
+      return `data:image/png;base64,${snapshot}`;
+    } catch (error) {
+      console.error('Erro ao gerar imagem da rota:', error);
+      return null;
+    }
+  };
+  
+
+  const ShareRouteButton = ({ routeCoordinates }: { routeCoordinates: Coordinates[] }) => {
+    const handleShare = async () => {
+      const routeSummary = `Minha rota: ${routeCoordinates.length} pontos\n` +
+        `Distância: ${calculateDistance(routeCoordinates)} km`;
+      
+      try {
+        await Share.share({
+          title: 'Compartilhar Rota',
+          message: routeSummary,
+          url: (await generateRouteImage(routeCoordinates, mapRef)) || undefined // Implementar captura de mapa
+        });
+      } catch (error) {
+        Alert.alert('Erro', 'Não foi possível compartilhar a rota');
+      }
+    };
+  
+    return (
+      <TouchableOpacity 
+        style={styles.shareFAB}
+        onPress={handleShare}
+      >
+        <Ionicons name="share" size={24} color="white" />
+      </TouchableOpacity>
+    );
   };
 
   // Calcular rota usando OSRM
@@ -452,6 +522,9 @@ const MapScreen: React.FC<MapScreenProps> = ({route, services, onSearchTextChang
         )}
       </MapView>
 
+      {/* Botão de compartilhamento */}
+      <ShareRouteButton routeCoordinates={routeCoordinates} />
+
       {/* Adicione coordenadas de debug */}
       {__DEV__ && destination && (
         <View style={styles.debugContainer}>
@@ -758,6 +831,18 @@ const styles = StyleSheet.create({
     padding: 15,
     textAlign: 'center',
     color: '#888'
+  },
+  shareFAB: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#007AFF',
+    borderRadius: 20,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
 });
 

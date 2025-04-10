@@ -14,7 +14,9 @@ type PageType =
   | 'Payments' 
   | 'Points'
   | 'DetalhesVeículo'
-  | 'Chat';
+  | 'Chat'
+  | 'Referral'
+  | 'Community';
 interface SuggestionItem {
     id: number;
     name: string;
@@ -27,6 +29,23 @@ type LocationType = {
   longitude: number;
   type?: 'work' | 'home' | 'favorite' | 'searched' | 'current';
 };
+
+interface CommunityPost {
+  id: string;
+  user: UserData;
+  content: string;
+  likes: number;
+  comments: Comment[];  
+  routeSnapshot: string;
+  timestamp: Date;
+}
+
+interface Comment {
+  id: string; 
+  user: UserData;
+  content: string;
+  timestamp: Date;
+}
 
 interface ActivityItem {
   id: string;
@@ -86,6 +105,7 @@ interface SuggestionItem {
     email: string;
     profileImage: string;
     vehicles: Vehicle[];
+    referralCode: string;
   }
   
   interface Vehicle {
@@ -148,7 +168,9 @@ export type {
   ServiceItem, 
   LocationType, 
   ServicePricing, 
-  RootStackParamList 
+  RootStackParamList,
+  CommunityPost,
+  Comment
 };
 
 export type accountOptions = {

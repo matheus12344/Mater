@@ -28,13 +28,13 @@
 - Compartilhamento de fotos do veículo
 - Tradução automática multi-idiomas
 
-## 5. Recursos de Pagamento Flexíveis
+## 5. Recursos de Pagamento Flexíveis - FEITO
 - Múltiplas formas de pagamento
 - Parcelamento em até 12x
 - Integração com programas de benefícios
 - Pagamento compartilhado
 
-## 6. Recursos de Conveniência
+## 6. Recursos de Conveniência - FEITO
 - Agendamento de serviços preventivos
 - Histórico de manutenções
 - Comparativo de preços

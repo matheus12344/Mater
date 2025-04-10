@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityItem, Vehicle } from '../types';
@@ -14,6 +15,7 @@ import * as Location from 'expo-location';
 import { useActivities } from '../context/ActivityContext';
 import SmartFeaturesService from '../services/SmartFeaturesService';
 import { scale } from 'react-native-size-matters';
+import { useTheme } from 'src/context/ThemeContext';
 
 export interface ServiceItem {
   id: string;
@@ -325,9 +327,8 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   const handleConfirmSolicitar = () => {
     if (!selectedVehicle || !incidentLocation) return;
 
-    const newActivity: Omit<ActivityItem, 'id'> = {
+    const newActivity: Omit<ActivityItem, 'id' | 'serviceId'> = {
       date: new Date(),
-      serviceId: service.id,
       title: service.title,
       description: service.description,
       status: 'pending',
@@ -373,6 +374,48 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
     Alert.alert(
       'Solicitação Confirmada',
       `Serviço: ${service.title}\nVeículo: ${selectedVehicle.plate}\nLocal: ${incidentLocation.address}`
+    );
+  };
+
+  const RatingSection = ({ service }: { service: ServiceItem }) => {
+    const { colors } = useTheme();
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+
+    const handleSubmitReview = (rating: number, comment: string) => {
+      console.log('Avaliação enviada:', { rating, comment });
+    };
+  
+    return (
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Avaliações</Text>
+        
+        <View style={styles.ratingContainer}>
+          {[1,2,3,4,5].map((star) => (
+            <TouchableOpacity key={star} onPress={() => setRating(star)}>
+              <Ionicons 
+                name={star <= rating ? 'star' : 'star-outline'} 
+                size={24} 
+                color="#FFD700" 
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+  
+        <TextInput
+          style={[styles.commentInput, { color: colors.text }]}
+          placeholder="Deixe seu comentário..."
+          value={comment}
+          onChangeText={setComment}
+        />
+  
+        <TouchableOpacity 
+          style={[styles.submitButton, { backgroundColor: colors.primary }]}
+          onPress={() => handleSubmitReview(rating, comment)}
+        >
+          <Text style={styles.buttonText}>Enviar Avaliação</Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -653,7 +696,29 @@ const localStyles = StyleSheet.create({
   chatButtonText: {
     fontSize: scale(16),
     fontWeight: '500',
+  },  
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
+  commentInput: {
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  submitButton: { 
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
 });
 
 export default ServiceDetailScreen;

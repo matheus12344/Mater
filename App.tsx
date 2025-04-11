@@ -556,7 +556,7 @@ export default function App() {
             route={{
               params: {
                 driverName: 'João Silva',
-                driverPhoto: 'https://via.placeholder.com/150'
+                driverPhoto: 'https://randomuser.me/api/portraits/men/67.jpg'
               }
             }}
           />

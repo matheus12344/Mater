@@ -40,7 +40,7 @@
 - Comparativo de preços
 - Sistema de favoritos
 
-## 7. Recursos Sociais 
+## 7. Recursos Sociais - FEITO
 - Comunidade de motoristas
 - Sistema de indicação
 - Avaliações e comentários

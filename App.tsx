@@ -39,6 +39,8 @@ import { servicePricing } from './src/config/Pricing';
 import PointsScreen from './src/pages/PointsScreen';
 import VehicleDetailScreen from './src/pages/VehicleDetailScreen';
 import ChatScreen from './src/pages/ChatScreen';
+import ReferralScreen from 'src/pages/ReferralScreen';
+import CommunityScreen from 'src/pages/CommunityScreen';
 
 
 // Configurações responsivas
@@ -387,6 +389,10 @@ export default function App() {
     setActivePage('Conta');
   };
 
+  const handleCommunity = () => {
+    setActivePage('Community');
+  };
+
   const renderContent = () => {
     switch (activePage) {
       case 'Home':
@@ -410,6 +416,7 @@ export default function App() {
               onDeleteHistoryItem={handleDeleteHistoryItem}
               onMap={handleMap}
               onEmergency={handleEmergency}
+              handleCommunity={handleCommunity}
           />
         );
       case 'Serviços':
@@ -554,6 +561,10 @@ export default function App() {
             }}
           />
         );
+      case 'Referral':
+        return <ReferralScreen />;
+      case 'Community':
+        return <CommunityScreen />;
       default:
         return (
             <View style={styles.otherPages}>

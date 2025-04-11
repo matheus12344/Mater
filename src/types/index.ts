@@ -15,8 +15,9 @@ type PageType =
   | 'Points'
   | 'DetalhesVeículo'
   | 'Chat'
-  | 'Referral'
-  | 'Community';
+  | 'Community'
+  | 'Referral';
+
 interface SuggestionItem {
     id: number;
     name: string;

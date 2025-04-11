@@ -62,7 +62,7 @@ export default function ChatScreen({ navigation, route }: any) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const driverName = route?.params?.driverName || 'Motorista';
-  const driverPhoto = route?.params?.driverPhoto || 'https://via.placeholder.com/150';
+  const driverPhoto = route?.params?.driverPhoto || 'https://randomuser.me/api/portraits/men/67.jpg';
   const chatId = `chat_${route.params.serviceId}`;
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
 

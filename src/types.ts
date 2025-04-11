@@ -12,7 +12,9 @@ export type PageType =
   | 'Payments'
   | 'Points'
   | 'Chat'
-  | 'DetalhesVeículo';
+  | 'DetalhesVeículo'
+  | 'Referral'
+  | 'Community';
 
 export interface ActivityItem {
   id: string;
@@ -22,6 +24,19 @@ export interface ActivityItem {
   status: 'completed' | 'pending' | 'cancelled';
   icon: string;
   price?: number;
+  serviceId?: string;
+  vehicle?: {
+    model: string;
+    plate: string;
+    color: string;
+  };
+  location?: {
+    address?: string;
+    coords: {
+      latitude: number;
+      longitude: number;
+    };
+  };
 }
 
 export interface ServiceItem {

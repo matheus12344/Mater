@@ -14,10 +14,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+
 import type { TabType, SuggestionItem } from '../types/index'; 
 
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { scale } from 'react-native-size-matters';
 
 // Defina a interface das props que este componente precisa receber
 interface HomeTabContentProps {
@@ -39,6 +41,7 @@ interface HomeTabContentProps {
   onDeleteHistoryItem: (index: number) => void; // Nova prop para deletar histórico
   onMap: (index: number) => void; // Nova prop para deletar histórico
   onEmergency: (index: number) => void; // Nova prop para deletar histórico
+  handleCommunity: (index: number) => void;
   
 
 }
@@ -60,7 +63,8 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
   onSelectSuggestion,
   onDeleteHistoryItem,
   onMap,
-  onEmergency
+  onEmergency,
+  handleCommunity
 }) => {
 
   const [showSuggestions, setShowSuggestions] = React.useState(false);
@@ -335,6 +339,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
       );
   };
     
+
   return (
     <View style={{flex: 1}}>
       {/* FlatList e outros componentes */}
@@ -375,6 +380,8 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
                 )}
               </TouchableOpacity>
             </View>
+
+            
 
             {/* Dropdown de sugestões */}
             {showSuggestions && (
@@ -515,7 +522,7 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
             position: 'absolute', 
             alignItems: 'center', 
             justifyContent: 'center',
-            top: 600,
+            top: 530,
             left: 295,
             zIndex: 10,
           }}
@@ -545,6 +552,16 @@ const HomeTabContent: React.FC<HomeTabContentProps> = ({
         >
             <Ionicons name="alert-circle-outline" size={50} color="white" />
       </TouchableOpacity>
+
+      {/* Botão da Comunidade */}
+      <TouchableOpacity
+        style={[styles.communityButton, { backgroundColor: colors.primary }]}
+        onPress={() => handleCommunity(0)}
+        accessibilityLabel="Acessar Comunidade"
+        accessibilityRole="button"
+      >
+        <Ionicons name="people" size={scale(20)} color="white" />
+      </TouchableOpacity>
   </View>
   );
 };
@@ -561,6 +578,30 @@ const MapStyles = StyleSheet.create({
     flex: 1,
   }
 })
+
+const styles = StyleSheet.create({
+  communityButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: scale(12),
+    borderRadius: scale(12),
+    marginHorizontal: scale(16),
+    marginTop: scale(10),
+    marginBottom: scale(5),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  communityButtonText: {
+    color: '#FFFFFF',
+    fontSize: scale(16),
+    fontWeight: '600',
+    marginLeft: scale(8),
+  },
+});
 
 export default HomeTabContent;
 

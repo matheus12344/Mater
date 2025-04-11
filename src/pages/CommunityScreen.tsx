@@ -235,7 +235,16 @@ const mockLeaderboard = [
   }
 ];
 
-const CommunityScreen = () => {
+interface CommunityScreenProps {
+  userData?: {
+    name: string;
+    email: string;
+    profileImage?: string;
+    vehicles: any[];
+  };
+}
+
+const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
   const { colors, styles: themeStyles } = useTheme();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [newPost, setNewPost] = useState('');
@@ -291,7 +300,7 @@ const CommunityScreen = () => {
         user: {
           name: 'Você',
           email: 'user@example.com',
-          profileImage: 'https://randomuser.me/api/portraits/men/32.jpg',
+          profileImage: userData?.profileImage || 'https://randomuser.me/api/portraits/men/32.jpg',
           vehicles: [],
           referralCode: 'XYZ123'
         },
@@ -720,7 +729,7 @@ const CommunityScreen = () => {
           <View style={[styles.newPostContainer, { backgroundColor: colors.card }]}>
             <View style={styles.postInputContainer}>
               <Image 
-                source={{ uri: 'https://randomuser.me/api/portraits/men/32.jpg' }} 
+                source={{ uri: userData?.profileImage || 'https://randomuser.me/api/portraits/men/32.jpg' }} 
                 style={styles.userAvatar} 
               />
               <TextInput

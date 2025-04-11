@@ -564,7 +564,7 @@ export default function App() {
       case 'Referral':
         return <ReferralScreen />;
       case 'Community':
-        return <CommunityScreen />;
+        return <CommunityScreen userData={userData} />;
       default:
         return (
             <View style={styles.otherPages}>

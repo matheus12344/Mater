@@ -13,6 +13,7 @@ interface ThemeContextType {
     cardDark: string;
     border: string;
     placeholder: string;
+    success: string;
   };
   styles: ReturnType<typeof createStyles>;
 }
@@ -29,6 +30,7 @@ const colorSchemes = {
     cardDark: '#E0E0E0',
     border: '#E0E0E0',
     placeholder: '#9E9E9E',
+    success: '#4CAF50',
   },
   dark: {
     background: '#121212',
@@ -39,6 +41,7 @@ const colorSchemes = {
     cardDark: '#2D2D2D',
     border: '#2D2D2D',
     placeholder: '#757575',
+    success: '#81C784',
   },
 };
 

@@ -40,7 +40,7 @@
 - Comparativo de preços
 - Sistema de favoritos
 
-## 7. Recursos Sociais
+## 7. Recursos Sociais 
 - Comunidade de motoristas
 - Sistema de indicação
 - Avaliações e comentários
@@ -58,13 +58,13 @@
 - Perfis de veículos múltiplos
 - Configurações de privacidade
 
-## 10. Recursos de Acessibilidade
+## 10. Recursos de Acessibilidade - FEITO
 - Modo de alto contraste
 - Suporte a leitores de tela
 - Opções de fonte ajustável
 - Comandos por voz
 
-## 11. Recursos de Gamificação
+## 11. Recursos de Gamificação - FEITO
 - Desafios diários
 - Conquistas por uso
 - Rankings de usuários

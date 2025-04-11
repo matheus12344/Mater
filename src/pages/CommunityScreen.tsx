@@ -12,7 +12,9 @@ import {
   Animated,
   Dimensions,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Modal,
+  ScrollView
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { CommunityPost } from '../types/index';
@@ -135,6 +137,104 @@ const mockPosts: CommunityPost[] = [
   }
 ];
 
+// Dados de gamificação
+const mockChallenges = [
+  {
+    id: '1',
+    title: 'Primeira Viagem',
+    description: 'Complete sua primeira viagem com o Mater',
+    reward: 100,
+    progress: 0,
+    total: 1,
+    completed: false,
+    icon: 'car'
+  },
+  {
+    id: '2',
+    title: 'Compartilhe Experiências',
+    description: 'Faça 3 posts na comunidade',
+    reward: 150,
+    progress: 1,
+    total: 3,
+    completed: false,
+    icon: 'share-social'
+  },
+  {
+    id: '3',
+    title: 'Comentarista Ativo',
+    description: 'Comente em 5 posts diferentes',
+    reward: 200,
+    progress: 2,
+    total: 5,
+    completed: false,
+    icon: 'chatbubble'
+  }
+];
+
+const mockAchievements = [
+  {
+    id: '1',
+    title: 'Novato',
+    description: 'Primeiro post na comunidade',
+    icon: 'star',
+    unlocked: true,
+    date: new Date(Date.now() - 86400000 * 2)
+  },
+  {
+    id: '2',
+    title: 'Comentarista',
+    description: '5 comentários em posts',
+    icon: 'chatbubbles',
+    unlocked: true,
+    date: new Date(Date.now() - 86400000)
+  },
+  {
+    id: '3',
+    title: 'Influenciador',
+    description: '10 posts com mais de 50 curtidas',
+    icon: 'trophy',
+    unlocked: false
+  }
+];
+
+const mockLeaderboard = [
+  {
+    id: '1',
+    name: 'João Silva',
+    profileImage: 'https://randomuser.me/api/portraits/men/32.jpg',
+    points: 1250,
+    rank: 1
+  },
+  {
+    id: '2',
+    name: 'Ana Oliveira',
+    profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
+    points: 980,
+    rank: 2
+  },
+  {
+    id: '3',
+    name: 'Lucas Mendes',
+    profileImage: 'https://randomuser.me/api/portraits/men/67.jpg',
+    points: 750,
+    rank: 3
+  },
+  {
+    id: '4',
+    name: 'Maria Santos',
+    profileImage: 'https://randomuser.me/api/portraits/women/68.jpg',
+    points: 620,
+    rank: 4
+  },
+  {
+    id: '5',
+    name: 'Pedro Costa',
+    profileImage: 'https://randomuser.me/api/portraits/men/22.jpg',
+    points: 450,
+    rank: 5
+  }
+];
+
 const CommunityScreen = () => {
   const { colors, styles: themeStyles } = useTheme();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -144,6 +244,15 @@ const CommunityScreen = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  
+  // Estados para gamificação
+  const [showGamification, setShowGamification] = useState(false);
+  const [activeTab, setActiveTab] = useState<'challenges' | 'achievements' | 'leaderboard'>('challenges');
+  const [userPoints, setUserPoints] = useState(320);
+  const [userRank, setUserRank] = useState(8);
+  const [challenges, setChallenges] = useState(mockChallenges);
+  const [achievements, setAchievements] = useState(mockAchievements);
+  const [leaderboard, setLeaderboard] = useState(mockLeaderboard);
   
   useEffect(() => {
     // Simulando carregamento de dados
@@ -197,7 +306,38 @@ const CommunityScreen = () => {
       setNewPost('');
       setSelectedImage(null);
       setIsPosting(false);
+      
+      // Atualizar desafios após criar um post
+      updateChallengesAfterPost();
     }, 1000);
+  };
+  
+  const updateChallengesAfterPost = () => {
+    setChallenges(prevChallenges => 
+      prevChallenges.map(challenge => {
+        if (challenge.id === '2') {
+          const newProgress = challenge.progress + 1;
+          const completed = newProgress >= challenge.total;
+          
+          if (completed && !challenge.completed) {
+            // Adicionar pontos quando completar o desafio
+            setUserPoints(prev => prev + challenge.reward);
+            
+            // Mostrar notificação de conquista
+            setTimeout(() => {
+              alert(`Parabéns! Você completou o desafio "${challenge.title}" e ganhou ${challenge.reward} pontos!`);
+            }, 500);
+          }
+          
+          return {
+            ...challenge,
+            progress: newProgress,
+            completed: completed
+          };
+        }
+        return challenge;
+      })
+    );
   };
   
   const pickImage = async () => {
@@ -306,6 +446,212 @@ const CommunityScreen = () => {
     </Animated.View>
   );
 
+  const renderGamificationModal = () => (
+    <Modal
+      visible={showGamification}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setShowGamification(false)}
+    >
+      <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Gamificação</Text>
+            <TouchableOpacity onPress={() => setShowGamification(false)}>
+              <Ionicons name="close" size={scale(24)} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.userStatsContainer}>
+            <View style={[styles.userStatItem, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name="star" size={scale(20)} color={colors.primary} />
+              <Text style={[styles.userStatValue, { color: colors.text }]}>{userPoints}</Text>
+              <Text style={[styles.userStatLabel, { color: colors.placeholder }]}>Pontos</Text>
+            </View>
+            <View style={[styles.userStatItem, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name="trophy" size={scale(20)} color={colors.primary} />
+              <Text style={[styles.userStatValue, { color: colors.text }]}>{userRank}º</Text>
+              <Text style={[styles.userStatLabel, { color: colors.placeholder }]}>Ranking</Text>
+            </View>
+            <View style={[styles.userStatItem, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name="ribbon" size={scale(20)} color={colors.primary} />
+              <Text style={[styles.userStatValue, { color: colors.text }]}>
+                {achievements.filter(a => a.unlocked).length}
+              </Text>
+              <Text style={[styles.userStatLabel, { color: colors.placeholder }]}>Conquistas</Text>
+            </View>
+          </View>
+          
+          <View style={styles.tabContainer}>
+            <TouchableOpacity 
+              style={[
+                styles.tabButton, 
+                activeTab === 'challenges' && { borderBottomColor: colors.primary }
+              ]}
+              onPress={() => setActiveTab('challenges')}
+            >
+              <Text style={[
+                styles.tabText, 
+                { color: activeTab === 'challenges' ? colors.primary : colors.text }
+              ]}>
+                Desafios
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.tabButton, 
+                activeTab === 'achievements' && { borderBottomColor: colors.primary }
+              ]}
+              onPress={() => setActiveTab('achievements')}
+            >
+              <Text style={[
+                styles.tabText, 
+                { color: activeTab === 'achievements' ? colors.primary : colors.text }
+              ]}>
+                Conquistas
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.tabButton, 
+                activeTab === 'leaderboard' && { borderBottomColor: colors.primary }
+              ]}
+              onPress={() => setActiveTab('leaderboard')}
+            >
+              <Text style={[
+                styles.tabText, 
+                { color: activeTab === 'leaderboard' ? colors.primary : colors.text }
+              ]}>
+                Ranking
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.tabContent}>
+            {activeTab === 'challenges' && (
+              <View>
+                {challenges.map(challenge => (
+                  <View key={challenge.id} style={[styles.challengeItem, { backgroundColor: colors.background }]}>
+                    <View style={styles.challengeHeader}>
+                      <View style={[styles.challengeIconContainer, { backgroundColor: colors.primary + '20' }]}>
+                        <Ionicons name={challenge.icon as any} size={scale(20)} color={colors.primary} />
+                      </View>
+                      <View style={styles.challengeInfo}>
+                        <Text style={[styles.challengeTitle, { color: colors.text }]}>{challenge.title}</Text>
+                        <Text style={[styles.challengeDescription, { color: colors.placeholder }]}>
+                          {challenge.description}
+                        </Text>
+                      </View>
+                      <View style={[styles.rewardContainer, { backgroundColor: colors.primary + '20' }]}>
+                        <Ionicons name="star" size={scale(16)} color={colors.primary} />
+                        <Text style={[styles.rewardText, { color: colors.primary }]}>{challenge.reward}</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.progressContainer}>
+                      <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+                        <View 
+                          style={[
+                            styles.progressFill, 
+                            { 
+                              backgroundColor: colors.primary,
+                              width: `${(challenge.progress / challenge.total) * 100}%`
+                            }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={[styles.progressText, { color: colors.placeholder }]}>
+                        {challenge.progress}/{challenge.total}
+                      </Text>
+                    </View>
+                    
+                    {challenge.completed && (
+                      <View style={[styles.completedBadge, { backgroundColor: colors.success + '20' }]}>
+                        <Ionicons name="checkmark-circle" size={scale(16)} color={colors.success} />
+                        <Text style={[styles.completedText, { color: colors.success }]}>Completo</Text>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {activeTab === 'achievements' && (
+              <View>
+                {achievements.map(achievement => (
+                  <View key={achievement.id} style={[styles.achievementItem, { backgroundColor: colors.background }]}>
+                    <View style={[
+                      styles.achievementIconContainer, 
+                      { 
+                        backgroundColor: achievement.unlocked 
+                          ? colors.primary + '20' 
+                          : colors.placeholder + '20' 
+                      }
+                    ]}>
+                      <Ionicons 
+                        name={achievement.icon as any} 
+                        size={scale(24)} 
+                        color={achievement.unlocked ? colors.primary : colors.placeholder} 
+                      />
+                    </View>
+                    <View style={styles.achievementInfo}>
+                      <Text style={[styles.achievementTitle, { color: colors.text }]}>{achievement.title}</Text>
+                      <Text style={[styles.achievementDescription, { color: colors.placeholder }]}>
+                        {achievement.description}
+                      </Text>
+                      {achievement.unlocked && achievement.date && (
+                        <Text style={[styles.achievementDate, { color: colors.placeholder }]}>
+                          Desbloqueado em {achievement.date.toLocaleDateString()}
+                        </Text>
+                      )}
+                    </View>
+                    {achievement.unlocked ? (
+                      <Ionicons name="checkmark-circle" size={scale(24)} color={colors.success} />
+                    ) : (
+                      <Ionicons name="lock-closed" size={scale(24)} color={colors.placeholder} />
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {activeTab === 'leaderboard' && (
+              <View>
+                {leaderboard.map((user, index) => (
+                  <View key={user.id} style={[styles.leaderboardItem, { backgroundColor: colors.background }]}>
+                    <View style={styles.rankContainer}>
+                      {index < 3 ? (
+                        <View style={[
+                          styles.rankBadge, 
+                          { 
+                            backgroundColor: 
+                              index === 0 ? '#FFD700' : 
+                              index === 1 ? '#C0C0C0' : 
+                              '#CD7F32'
+                          }
+                        ]}>
+                          <Text style={styles.rankNumber}>{index + 1}</Text>
+                        </View>
+                      ) : (
+                        <Text style={[styles.rankNumber, { color: colors.placeholder }]}>{index + 1}</Text>
+                      )}
+                    </View>
+                    <Image source={{ uri: user.profileImage }} style={styles.leaderboardAvatar} />
+                    <Text style={[styles.leaderboardName, { color: colors.text }]}>{user.name}</Text>
+                    <View style={[styles.pointsContainer, { backgroundColor: colors.primary + '20' }]}>
+                      <Ionicons name="star" size={scale(16)} color={colors.primary} />
+                      <Text style={[styles.pointsText, { color: colors.primary }]}>{user.points}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+
   if (isLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
@@ -344,6 +690,16 @@ const CommunityScreen = () => {
         <Text style={[styles.headerSubtitle, { color: colors.placeholder }]}>
           Compartilhe suas experiências
         </Text>
+
+        {/* Gamificação */}
+        
+        <TouchableOpacity 
+          style={[styles.gamificationButton, { backgroundColor: colors.primary }]}
+          onPress={() => setShowGamification(true)}
+        >
+          <Ionicons name="trophy" size={scale(18)} color="#fff" />
+          <Text style={styles.gamificationButtonText}>Gamificação</Text>
+        </TouchableOpacity>
       </Animated.View>
       
       <FlatList
@@ -424,6 +780,8 @@ const CommunityScreen = () => {
           </View>
         }
       />
+      
+      {renderGamificationModal()}
     </KeyboardAvoidingView>
   );
 };
@@ -607,5 +965,228 @@ const styles = StyleSheet.create({
   },
   commentText: {
     flex: 1,
+  },
+  gamificationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: scale(8),
+    borderRadius: scale(20),
+    marginTop: scale(10),
+    alignSelf: 'flex-start',
+  },
+  gamificationButtonText: {
+    color: '#FFFFFF',
+    fontSize: scale(14),
+    fontWeight: '600',
+    marginLeft: scale(5),
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: scale(20),
+    borderTopRightRadius: scale(20),
+    padding: scale(20),
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: scale(20),
+  },
+  modalTitle: {
+    fontSize: scale(20),
+    fontWeight: 'bold',
+  },
+  userStatsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: scale(20),
+  },
+  userStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    padding: scale(12),
+    borderRadius: scale(12),
+    marginHorizontal: scale(5),
+  },
+  userStatValue: {
+    fontSize: scale(18),
+    fontWeight: 'bold',
+    marginTop: scale(5),
+  },
+  userStatLabel: {
+    fontSize: scale(12),
+    marginTop: scale(2),
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    marginBottom: scale(15),
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: scale(10),
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabText: {
+    fontSize: scale(14),
+    fontWeight: '600',
+  },
+  tabContent: {
+    maxHeight: scale(400),
+  },
+  challengeItem: {
+    borderRadius: scale(12),
+    padding: scale(15),
+    marginBottom: scale(10),
+  },
+  challengeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  challengeIconContainer: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  challengeInfo: {
+    flex: 1,
+    marginLeft: scale(10),
+  },
+  challengeTitle: {
+    fontSize: scale(16),
+    fontWeight: '600',
+  },
+  challengeDescription: {
+    fontSize: scale(12),
+    marginTop: scale(2),
+  },
+  rewardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: scale(6),
+    borderRadius: scale(12),
+  },
+  rewardText: {
+    fontSize: scale(14),
+    fontWeight: '600',
+    marginLeft: scale(4),
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: scale(10),
+  },
+  progressBar: {
+    flex: 1,
+    height: scale(6),
+    borderRadius: scale(3),
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: scale(3),
+  },
+  progressText: {
+    fontSize: scale(12),
+    marginLeft: scale(8),
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: scale(6),
+    borderRadius: scale(12),
+    marginTop: scale(10),
+    alignSelf: 'flex-start',
+  },
+  completedText: {
+    fontSize: scale(12),
+    fontWeight: '600',
+    marginLeft: scale(4),
+  },
+  achievementItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: scale(12),
+    padding: scale(15),
+    marginBottom: scale(10),
+  },
+  achievementIconContainer: {
+    width: scale(50),
+    height: scale(50),
+    borderRadius: scale(25),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  achievementInfo: {
+    flex: 1,
+    marginLeft: scale(15),
+  },
+  achievementTitle: {
+    fontSize: scale(16),
+    fontWeight: '600',
+  },
+  achievementDescription: {
+    fontSize: scale(12),
+    marginTop: scale(2),
+  },
+  achievementDate: {
+    fontSize: scale(10),
+    marginTop: scale(4),
+  },
+  leaderboardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: scale(12),
+    padding: scale(15),
+    marginBottom: scale(10),
+  },
+  rankContainer: {
+    width: scale(30),
+    alignItems: 'center',
+  },
+  rankBadge: {
+    width: scale(24),
+    height: scale(24),
+    borderRadius: scale(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rankNumber: {
+    fontSize: scale(14),
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  leaderboardAvatar: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
+    marginLeft: scale(10),
+  },
+  leaderboardName: {
+    flex: 1,
+    fontSize: scale(16),
+    fontWeight: '600',
+    marginLeft: scale(10),
+  },
+  pointsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: scale(6),
+    borderRadius: scale(12),
+  },
+  pointsText: {
+    fontSize: scale(14),
+    fontWeight: '600',
+    marginLeft: scale(4),
   },
 });

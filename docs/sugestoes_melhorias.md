@@ -104,3 +104,11 @@
 - Considerar feedback dos usuários
 - Implementar mudanças gradualmente
 - Monitorar métricas de sucesso 
+
+
+## Recomendações de Packages para dar certo
+- expo@52.0.37 - expected version: ~52.0.42
+- expo-device@7.0.2 - expected version: ~7.0.3
+- expo-location@18.0.8 - expected version: ~18.0.10
+- expo-sqlite@15.1.2 - expected version: ~15.1.4
+- react-native@0.76.7 - expected version: 0.76.9

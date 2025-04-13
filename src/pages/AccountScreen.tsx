@@ -704,7 +704,7 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
             Seguro do Veículo
           </Text>
           {insuranceQuote ? (
-            <View style={localStyles.insuranceCard}>
+            <TouchableOpacity style={localStyles.insuranceCard} onPress={() => handleOptionSelect('SeguroProBeneficio')}>
               <View style={localStyles.insuranceHeader}>
                 <Ionicons name="shield-checkmark-outline" size={24} color="#9C27B0" />
                 <Text style={[localStyles.insuranceTitle, { color: colors.text }]}>
@@ -717,7 +717,7 @@ const AccountScreen: React.FC<AccountScreenProps> = ({
               <Text style={[localStyles.insuranceValidity, { color: colors.placeholder }]}>
                 Validade: {insuranceQuote.validity}
               </Text>
-            </View>
+            </TouchableOpacity>
           ) : (
             <TouchableOpacity 
               style={[localStyles.insuranceCard, localStyles.noInsuranceCard]}

@@ -14,7 +14,9 @@ export type PageType =
   | 'Chat'
   | 'DetalhesVeículo'
   | 'Referral'
-  | 'Community';
+  | 'Community'
+  | 'SeguroPro'
+  | 'SeguroProBeneficio';
 
 export interface ActivityItem {
   id: string;

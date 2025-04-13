@@ -41,6 +41,8 @@ import VehicleDetailScreen from './src/pages/VehicleDetailScreen';
 import ChatScreen from './src/pages/ChatScreen';
 import ReferralScreen from 'src/pages/ReferralScreen';
 import CommunityScreen from 'src/pages/CommunityScreen';
+import SeguroProBenefits from 'src/pages/SeguroProBenefits';
+import SeguroPro from 'src/pages/SeguroPro';
 
 
 // Configurações responsivas
@@ -565,6 +567,10 @@ export default function App() {
         return <ReferralScreen />;
       case 'Community':
         return <CommunityScreen userData={userData} />;
+      case 'SeguroProBeneficio':
+        return <SeguroProBenefits onBack={() => setActivePage('Conta')} onUpgrade={() => setActivePage('SeguroPro')} />;
+      case 'SeguroPro':
+        return <SeguroPro onBack={() => setActivePage('Conta')} />;
       default:
         return (
             <View style={styles.otherPages}>

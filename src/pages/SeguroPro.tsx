@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, Animated, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -39,6 +39,34 @@ const SeguroPro: React.FC<SeguroProProps> = ({ onBack }) => {
     },
   ];
 
+  const handleSignUp = () => {
+    console.log('Assinar agora');
+  };
+
+  const handleUpgrade = () => {
+    console.log('Upgrade para SeguroPlatinum');
+    Alert.alert('Upgrade para SeguroPlatinum', 'Você deseja upgrade para o SeguroPlatinum?');
+    
+  };
+
+  const [expanded, setExpanded] = useState(false);
+  const [animation] = useState(new Animated.Value(0));
+
+  const toggleExpand = () => {
+    const toValue = expanded ? 0 : 1;
+    Animated.timing(animation, {
+      toValue,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+    setExpanded(!expanded);
+  };
+
+  const maxHeight = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [100, 350],
+  });
+
   return (
     <ScrollView style={styles.container}>
       <LinearGradient
@@ -49,7 +77,7 @@ const SeguroPro: React.FC<SeguroProProps> = ({ onBack }) => {
           <TouchableOpacity onPress={() => onBack()}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>SeguroPro</Text>
+          <Text style={styles.headerTitle}>SeguroPlatinum</Text>
           <View style={{ width: 24 }} />
         </View>
         
@@ -75,7 +103,7 @@ const SeguroPro: React.FC<SeguroProProps> = ({ onBack }) => {
           
           <TouchableOpacity 
             style={styles.signButton}
-            onPress={() => {/* Implementar lógica de assinatura */}}
+            onPress={() => {handleUpgrade()}}
           >
             <Text style={styles.signButtonText}>
               Assinar Agora
@@ -102,6 +130,73 @@ const SeguroPro: React.FC<SeguroProProps> = ({ onBack }) => {
               </View>
             </View>
           ))}
+        </View>
+
+        {/* Card de Sustentabilidade */}
+        <View style={styles.sustainabilityCard}>
+          <View style={styles.sustainabilityHeader}>
+            <View style={styles.sustainabilityIconContainer}>
+              <Ionicons name="leaf" size={24} color="#10B981" />
+            </View>
+            <Text style={styles.sustainabilityTitle}>Sustentabilidade</Text>
+            <TouchableOpacity onPress={toggleExpand} style={styles.expandButton}>
+              <Ionicons 
+                name={expanded ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color="#6B7280" 
+              />
+            </TouchableOpacity>
+          </View>
+          
+          <Animated.View style={[styles.sustainabilityContent, { maxHeight }]}>
+            <View style={styles.sustainabilityItem}>
+              <View style={styles.sustainabilityItemIcon}>
+                <Ionicons name="analytics" size={20} color="#10B981" />
+              </View>
+              <View style={styles.sustainabilityItemText}>
+                <Text style={styles.sustainabilityItemTitle}>Pegada de Carbono</Text>
+                <Text style={styles.sustainabilityItemDescription}>
+                  Calcule e acompanhe o impacto ambiental do seu veículo
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.sustainabilityItem}>
+              <View style={styles.sustainabilityItemIcon}>
+                <Ionicons name="earth" size={20} color="#10B981" />
+              </View>
+              <View style={styles.sustainabilityItemText}>
+                <Text style={styles.sustainabilityItemTitle}>Compensação Ambiental</Text>
+                <Text style={styles.sustainabilityItemDescription}>
+                  Compense suas emissões com projetos de reflorestamento
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.sustainabilityItem}>
+              <View style={styles.sustainabilityItemIcon}>
+                <Ionicons name="speedometer" size={20} color="#10B981" />
+              </View>
+              <View style={styles.sustainabilityItemText}>
+                <Text style={styles.sustainabilityItemTitle}>Direção Econômica</Text>
+                <Text style={styles.sustainabilityItemDescription}>
+                  Dicas personalizadas para reduzir consumo de combustível
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.sustainabilityItem}>
+              <View style={styles.sustainabilityItemIcon}>
+                <Ionicons name="reload" size={20} color="#10B981" />
+              </View>
+              <View style={styles.sustainabilityItemText}>
+                <Text style={styles.sustainabilityItemTitle}>Integração com Reciclagem</Text>
+                <Text style={styles.sustainabilityItemDescription}>
+                  Descarte correto de peças e componentes do veículo
+                </Text>
+              </View>
+            </View>
+          </Animated.View>
         </View>
 
         <View style={styles.faqSection}>
@@ -239,6 +334,66 @@ const styles = StyleSheet.create({
   },
   benefitDescription: {
     color: '#6B7280',
+  },
+  sustainabilityCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  sustainabilityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sustainabilityIconContainer: {
+    backgroundColor: '#D1FAE5',
+    padding: 10,
+    borderRadius: 12,
+  },
+  sustainabilityTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    flex: 1,
+    marginLeft: 12,
+  },
+  expandButton: {
+    padding: 4,
+  },
+  sustainabilityContent: {
+    marginTop: 16,
+    overflow: 'hidden',
+  },
+  sustainabilityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sustainabilityItemIcon: {
+    backgroundColor: '#D1FAE5',
+    padding: 8,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  sustainabilityItemText: {
+    flex: 1,
+  },
+  sustainabilityItemTitle: {
+    fontWeight: 'bold',
+    color: '#1F2937',
+    fontSize: 16,
+  },
+  sustainabilityItemDescription: {
+    color: '#6B7280',
+    fontSize: 14,
+    marginTop: 2,
   },
   faqSection: {
     marginTop: 32,

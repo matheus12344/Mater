@@ -148,7 +148,7 @@ const SeguroProBenefits: React.FC<SeguroProBenefitsProps> = ({ onBack, onUpgrade
           onPress={() => onUpgrade()}
         >
           <Text style={styles.upgradeButtonText}>
-            Upgrade para SeguroPro
+            Upgrade para SeguroPlatinum
           </Text>
         </TouchableOpacity>
       </View>

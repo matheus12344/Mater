@@ -15,7 +15,17 @@ import * as Location from 'expo-location';
 import { useActivities } from '../context/ActivityContext';
 import SmartFeaturesService from '../services/SmartFeaturesService';
 import { scale } from 'react-native-size-matters';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from 'src/context/ThemeContext';
+import * as Notifications from 'expo-notifications';
+
+// Configurar o comportamento das notificações
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 export interface ServiceItem {
   id: string;
@@ -74,7 +84,6 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   const [nearbyWorkshops, setNearbyWorkshops] = useState<any[]>([]);
   const { addActivity } = useActivities();
   const smartFeaturesService = SmartFeaturesService.getInstance();
-  const { theme } = useTheme();
 
   useEffect(() => {
     if (incidentLocation) {
@@ -325,7 +334,7 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   );
 
   // Confirma a solicitação
-  const handleConfirmSolicitar = () => {
+  const handleConfirmSolicitar = async () => {
     if (!selectedVehicle || !incidentLocation) return;
 
     const newActivity: Omit<ActivityItem, 'id' | 'serviceId'> = {
@@ -372,14 +381,70 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
     console.groupEnd();
 
     setRequestModalVisible(false);
+    
+    // Gerar um tempo estimado aleatório entre 5 e 15 minutos
+    const estimatedTime = Math.floor(Math.random() * 10) + 5;
+    
+    // Gerar um nome aleatório para o motorista
+    const driverNames = ['João', 'Carlos', 'Pedro', 'Miguel', 'André', 'Lucas', 'Rafael', 'Bruno'];
+    const randomDriverName = driverNames[Math.floor(Math.random() * driverNames.length)];
+    
+    // Gerar uma placa aleatória para o guincho
+    const generateRandomPlate = () => {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const numbers = '0123456789';
+      let plate = '';
+      for (let i = 0; i < 3; i++) {
+        plate += letters.charAt(Math.floor(Math.random() * letters.length));
+      }
+      plate += '-';
+      for (let i = 0; i < 4; i++) {
+        plate += numbers.charAt(Math.floor(Math.random() * numbers.length));
+      }
+      return plate;
+    };
+    
+    const guinchoPlate = generateRandomPlate();
+    
+    // Solicitar permissão para enviar notificações
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permissão Negada',
+        'Precisamos de permissão para enviar notificações sobre o status do seu serviço.'
+      );
+      return;
+    }
+    
+    // Enviar notificação imediata
+    await Notifications.presentNotificationAsync({
+      title: 'Serviço Confirmado! 🚛',
+      body: `Seu guincho já está a caminho!\nMotorista: ${randomDriverName}\nPlaca: ${guinchoPlate}\nChegada em: ${estimatedTime} minutos`,
+      data: { service: service.title, vehicle: selectedVehicle.plate },
+    });
+    
+    // Mostrar alerta na tela
     Alert.alert(
-      'Solicitação Confirmada',
-      `Serviço: ${service.title}\nVeículo: ${selectedVehicle.plate}\nLocal: ${incidentLocation.address}`
+      'Serviço Confirmado! 🚛',
+      `Seu guincho já está a caminho!\n\n` +
+      `🚗 Motorista: ${randomDriverName}\n` +
+      `🔢 Placa do Guincho: ${guinchoPlate}\n` +
+      `⏱ Tempo estimado de chegada: ${estimatedTime} minutos\n\n` +
+      `Você receberá uma notificação quando o guincho estiver próximo.`,
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Aqui poderíamos adicionar uma navegação para uma tela de acompanhamento
+            // ou iniciar um timer para atualizar o status
+          }
+        }
+      ]
     );
   };
 
   const RatingSection = ({ service }: { service: ServiceItem }) => {
-    const { theme } = useTheme();
+    const { colors } = useTheme();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
 
@@ -389,7 +454,7 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   
     return (
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Avaliações</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Avaliações</Text>
         
         <View style={styles.ratingContainer}>
           {[1,2,3,4,5].map((star) => (
@@ -404,14 +469,14 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
         </View>
   
         <TextInput
-          style={[styles.commentInput, { color: theme.colors.text }]}
+          style={[styles.commentInput, { color: colors.text }]}
           placeholder="Deixe seu comentário..."
           value={comment}
           onChangeText={setComment}
         />
   
         <TouchableOpacity 
-          style={[styles.submitButton, { backgroundColor: theme.colors.primary }]}
+          style={[styles.submitButton, { backgroundColor: colors.primary }]}
           onPress={() => handleSubmitReview(rating, comment)}
         >
           <Text style={styles.buttonText}>Enviar Avaliação</Text>

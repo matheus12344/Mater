@@ -49,6 +49,9 @@ export interface ServiceItem {
   color: string;
   price?: number;
   distance?: number;
+  status?: 'active' | 'completed' | 'cancelled';
+  date?: Date;
+  userId?: string;
 }
 
 export interface SuggestionItem {
@@ -65,8 +68,14 @@ export interface SuggestionItem {
 }
 
 export interface UserData {
+  id: string;
   name: string;
   email: string;
+  phone: string;
+  role: 'admin' | 'user';
+  status: 'active' | 'inactive';
+  lastLogin: Date;
+  createdAt: Date;
   vehicles: Vehicle[];
 }
 
@@ -88,26 +97,70 @@ export interface NavigationButtonProps {
   onPress: () => void;
 }
 
-export interface RootStackParamList {
-  [key: string]: undefined | {
-    service: string;
-    amount: number;
-    serviceDetails?: Record<string, any>;
-  } | {
-    id: string;
+export type RootStackParamList = {
+  Login: undefined;
+  Home: undefined;
+  Profile: undefined;
+  Services: undefined;
+  ServiceDetails: { serviceId: string };
+  AdminDashboard: undefined;
+  AdminUsers: undefined;
+  AdminServices: undefined;
+  AdminAnalytics: undefined;
+  AdminNotifications: undefined;
+  AdminSystemSettings: undefined;
+  UserTabs: undefined;
+  AdminTabs: undefined;
+};
+
+export interface ServiceManagementProps {
+  onServiceUpdate: (serviceId: string, updatedData: any) => void;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  status: 'read' | 'unread';
+  createdAt: string;
+  userId?: string;
+}
+
+export interface Theme {
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    text: string;
+    error: string;
+    success: string;
+    warning: string;
+    info: string;
   };
-  Payment: {
-    service: string;
-    amount: number;
-    serviceDetails?: Record<string, any>;
+  spacing: {
+    xs: number;
+    sm: number;
+    md: number;
+    lg: number;
+    xl: number;
   };
-  ActivityDetail: {
-    id: string;
-  };
-  VehicleDetail: {
-    id: string;
-  };
-  ServiceDetail: {
-    id: string;
+  typography: {
+    h1: {
+      fontSize: number;
+      fontWeight: string;
+    };
+    h2: {
+      fontSize: number;
+      fontWeight: string;
+    };
+    body: {
+      fontSize: number;
+      fontWeight: string;
+    };
+    caption: {
+      fontSize: number;
+      fontWeight: string;
+    };
   };
 }

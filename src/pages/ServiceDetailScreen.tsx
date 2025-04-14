@@ -15,7 +15,7 @@ import * as Location from 'expo-location';
 import { useActivities } from '../context/ActivityContext';
 import SmartFeaturesService from '../services/SmartFeaturesService';
 import { scale } from 'react-native-size-matters';
-import { useTheme } from 'src/context/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 export interface ServiceItem {
   id: string;
@@ -74,6 +74,7 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   const [nearbyWorkshops, setNearbyWorkshops] = useState<any[]>([]);
   const { addActivity } = useActivities();
   const smartFeaturesService = SmartFeaturesService.getInstance();
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (incidentLocation) {
@@ -378,7 +379,7 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   };
 
   const RatingSection = ({ service }: { service: ServiceItem }) => {
-    const { colors } = useTheme();
+    const { theme } = useTheme();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
 
@@ -388,7 +389,7 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
   
     return (
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Avaliações</Text>
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Avaliações</Text>
         
         <View style={styles.ratingContainer}>
           {[1,2,3,4,5].map((star) => (
@@ -403,14 +404,14 @@ const ServiceDetailScreen: React.FC<ServiceDetailScreenProps> = ({
         </View>
   
         <TextInput
-          style={[styles.commentInput, { color: colors.text }]}
+          style={[styles.commentInput, { color: theme.colors.text }]}
           placeholder="Deixe seu comentário..."
           value={comment}
           onChangeText={setComment}
         />
   
         <TouchableOpacity 
-          style={[styles.submitButton, { backgroundColor: colors.primary }]}
+          style={[styles.submitButton, { backgroundColor: theme.colors.primary }]}
           onPress={() => handleSubmitReview(rating, comment)}
         >
           <Text style={styles.buttonText}>Enviar Avaliação</Text>

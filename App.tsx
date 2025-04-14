@@ -30,19 +30,19 @@ import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import PrivacyPolicyScreen from './src/pages/PrivacyScreen';
 import MapScreen from './src/pages/MapScreen';
 import 'react-native-gesture-handler';
-import EmergencyScreen from 'src/pages/EmergencyScreen';
-import PaymentScreen from 'src/pages/PaymentScreen';
+import EmergencyScreen from './src/pages/EmergencyScreen';
+import PaymentScreen from './src/pages/PaymentScreen';
 import { createStyles, colorSchemes } from './src/styles/theme';
 import { mockServices, mockActivities, mockUserData, mockAccountData, mockSuggestions } from './src/data/mockData';
-import NavigationButton from 'src/components/NavigationButton';
+import NavigationButton from './src/components/NavigationButton';
 import { servicePricing } from './src/config/Pricing';
 import PointsScreen from './src/pages/PointsScreen';
 import VehicleDetailScreen from './src/pages/VehicleDetailScreen';
 import ChatScreen from './src/pages/ChatScreen';
-import ReferralScreen from 'src/pages/ReferralScreen';
-import CommunityScreen from 'src/pages/CommunityScreen';
-import SeguroProBenefits from 'src/pages/SeguroProBenefits';
-import SeguroPro from 'src/pages/SeguroPro';
+import ReferralScreen from './src/pages/ReferralScreen';
+import CommunityScreen from './src/pages/CommunityScreen';
+import SeguroProBenefits from './src/pages/SeguroProBenefits';
+import SeguroPro from './src/pages/SeguroPro';
 
 
 // Configurações responsivas
@@ -398,75 +398,75 @@ export default function App() {
   const renderContent = () => {
     switch (activePage) {
       case 'Home':
-  return (
-            <HomeTabContent
-              selectedTab={selectedTab}
-              setSelectedTab={setSelectedTab}
-              styles={styles}
-              colors={colors}
-              scale={scale}
-              searchText={searchText}
-              setSearchText={setSearchText}
-              handleSearch={handleSearch}
-              history={history}
-              renderItem={renderItem}
-              suggestions={suggestions}
-              renderSuggestion={renderSuggestion}
-              onSearchTextChange={handleSearchTextChange}
-              onSelectSuggestion={handleSelectSuggestion}
-              searchSuggestions={searchSuggestions}
-              onDeleteHistoryItem={handleDeleteHistoryItem}
-              onMap={handleMap}
-              onEmergency={handleEmergency}
-              handleCommunity={handleCommunity}
-          />
-        );
+        return (
+          <HomeTabContent
+            selectedTab={selectedTab}
+            setSelectedTab={setSelectedTab}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            handleSearch={handleSearch}
+            history={history}
+            renderItem={renderItem}
+            suggestions={suggestions}
+            renderSuggestion={renderSuggestion}
+            onSearchTextChange={handleSearchTextChange}
+            onSelectSuggestion={handleSelectSuggestion}
+            searchSuggestions={searchSuggestions}
+            onDeleteHistoryItem={handleDeleteHistoryItem}
+            onMap={handleMap}
+            onEmergency={handleEmergency}
+            handleCommunity={handleCommunity}
+        />
+      );
       case 'Serviços':
         return (
-            <ServicesScreen
-              services={services}
-              handleServiceSelect={handleServiceSelect}
-              styles={styles}
-              colors={colors}
-              scale={scale}
-            />
+          <ServicesScreen
+            services={services}
+            handleServiceSelect={handleServiceSelect}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+          />
         );
       case 'Atividade':
         return (
-              <ActivityScreen
-                activities={activities}
-                renderActivityItem={renderActivityItem}
-                styles={styles}
-                colors={colors}
-                handleActivityPress={handleActivityPress}
-              />
+          <ActivityScreen
+            activities={activities}
+            renderActivityItem={renderActivityItem}
+            styles={styles}
+            colors={colors}
+            handleActivityPress={handleActivityPress}
+          />
         );
       case 'DetalhesAtividade':
         return (
           selectedActivity && (
-              <ActivityDetailScreen
-                activity={selectedActivity}
-                onBack={handleActivityBack}
-                styles={styles}
-                colors={colors}
-                scale={(size) => size}
-              />
+            <ActivityDetailScreen
+              activity={selectedActivity}
+              onBack={handleActivityBack}
+              styles={styles}
+              colors={colors}
+              scale={(size) => size}
+            />
           )
         );
       case 'Conta':
         return (
-            <AccountScreen
-              userData={userData}
-              setUserData={setUserData}
-              styles={styles}
-              colors={colors}
-              scale={scale}
-              accountOptions={accountOptions}
-              renderVehicleItem={renderVehicleItem}
-              renderAccountOption={renderAccountOption}
-              onOptionSelect={handleOptionSelect}
-              onVehicleSelect={handleVehicleSelect}
-            />
+          <AccountScreen
+            userData={userData}
+            setUserData={setUserData}
+            styles={styles}
+            colors={colors}
+            scale={scale}
+            accountOptions={accountOptions}
+            renderVehicleItem={renderVehicleItem}
+            renderAccountOption={renderAccountOption}
+            onOptionSelect={handleOptionSelect}
+            onVehicleSelect={handleVehicleSelect}
+          />
         );
       case 'DetalhesServiço':
         return (
@@ -484,56 +484,56 @@ export default function App() {
         );
       case 'Settings':
         return (
-            <SettingsScreen 
-              styles={styles} 
-              colors={colors} 
-              scale={scale} 
-            />
+          <SettingsScreen 
+            styles={styles} 
+            colors={colors} 
+            scale={scale} 
+          />
         );
       case 'Privacy':
         return (
-            <PrivacyPolicyScreen/>
+          <PrivacyPolicyScreen/>
         );
       case 'Map':
         return (
-            <MapScreen 
-              key="map" 
-              route={{ params: { 
-                searchText: mapSearchParams.searchText,
-                coordinates: mapSearchParams.coordinates 
-              } 
-            }} 
-              services={services}
-              onSearchTextChange={handleSearchTextChange}
-              onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
-              onServiceSelect={handleServiceSelect}
-            />
+          <MapScreen 
+            key="map" 
+            route={{ params: { 
+              searchText: mapSearchParams.searchText,
+              coordinates: mapSearchParams.coordinates 
+            } 
+          }} 
+            services={services}
+            onSearchTextChange={handleSearchTextChange}
+            onSelectSuggestion={(item) => console.log('Sugestão selecionada:', item)}
+            onServiceSelect={handleServiceSelect}
+          />
         );
       case 'Emergency':
         return (
-            <EmergencyScreen route={{ onback: handleBackHome }} />
+          <EmergencyScreen route={{ onback: handleBackHome }} />
         );
       case 'Payments':
         return (
-            <PaymentScreen 
-              route={{ 
-                key: 'PaymentScreenKey',
-                name: 'Payment',
-                params: { 
-                service: selectedService?.title || 'Serviço',
-                amount: servicePricing[selectedService?.id || '1']?.baseRate || 0,
-                  serviceDetails: { 
-                    pickup: { latitude: -23.561684, longitude: -46.655981 }, 
-                    destination: { latitude: -23.562684, longitude: -46.656981 }, 
-                    distance: 5.0, 
-                    coordinates: [
-                      { latitude: -23.561684, longitude: -46.655981 },
-                      { latitude: -23.562684, longitude: -46.656981 }
-                    ], 
-                    vehicleType: 'Carro' 
-                  } 
+          <PaymentScreen 
+            route={{ 
+              key: 'PaymentScreenKey',
+              name: 'Payment',
+              params: { 
+              service: selectedService?.title || 'Serviço',
+              amount: servicePricing[selectedService?.id || '1']?.baseRate || 0,
+                serviceDetails: { 
+                  pickup: { latitude: -23.561684, longitude: -46.655981 }, 
+                  destination: { latitude: -23.562684, longitude: -46.656981 }, 
+                  distance: 5.0, 
+                  coordinates: [
+                    { latitude: -23.561684, longitude: -46.655981 },
+                    { latitude: -23.562684, longitude: -46.656981 }
+                  ], 
+                  vehicleType: 'Carro' 
                 } 
-              }} 
+              } 
+            }} 
             onBack={() => setActivePage('Home')}
           />
         );

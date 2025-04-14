@@ -102,8 +102,14 @@ interface SuggestionItem {
   }
   
   interface UserData {
+    id: string;
     name: string;
     email: string;
+    phone: string;
+    role: 'admin' | 'user';
+    status: 'active' | 'inactive';
+    lastLogin: Date;
+    createdAt: Date;
     profileImage: string;
     vehicles: Vehicle[];
     referralCode: string;
@@ -145,6 +151,46 @@ interface SuggestionItem {
         vehicleType: string;
       };
     };
+    Home: {
+      selectedTab: string;
+      setSelectedTab: (tab: string) => void;
+      styles: any;
+      colors: any;
+      theme: Theme;
+    };
+    Services: {
+      services: any[];
+      handleServiceSelect: (service: any) => void;
+      styles: any;
+      colors: any;
+      scale: number;
+    };
+    Profile: {
+      userData: any;
+      setUserData: (data: any) => void;
+      styles: any;
+      colors: any;
+      theme: Theme;
+    };
+    AdminDashboard: undefined;
+    AdminUsers: undefined;
+    AdminServices: {
+      onServiceUpdate: (service: any) => void;
+    };
+    AdminAnalytics: undefined;
+    AdminNotifications: undefined;
+    AdminSystemSettings: undefined;
+    ServiceDetails: {
+      service: any;
+      onChat: () => void;
+      onBack: () => void;
+      styles: any;
+      colors: any;
+      theme: Theme;
+    };
+    Login: undefined;
+    AdminTabs: undefined;
+    UserTabs: undefined;
   };
   
   
@@ -195,4 +241,57 @@ export interface Workshop {
     latitude: number;
     longitude: number;
   };
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  status: 'read' | 'unread';
+  createdAt: Date;
+}
+
+export interface AuthContextData {
+  user: User | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => void;
+  loading: boolean;
+  isAuthenticated: boolean;
+}
+
+export interface Theme {
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    text: string;
+    error: string;
+    success: string;
+    warning: string;
+    info: string;
+  };
+  spacing: {
+    xs: number;
+    sm: number;
+    md: number;
+    lg: number;
+    xl: number;
+  };
+  typography: {
+    fontFamily: string;
+    fontSize: {
+      small: number;
+      medium: number;
+      large: number;
+    };
+  };
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+  isAdmin: boolean;
 }

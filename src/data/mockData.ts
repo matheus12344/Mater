@@ -101,8 +101,14 @@ export const mockActivities: ActivityItem[] = [
 ];
 
 export const mockUserData: UserData = {
+  id: '1',
   name: 'Matheus Henrique',
   email: 'matheushgevangelista@gmail.com',
+  phone: '(11) 99999-9999',
+  role: 'user' as 'admin' | 'user',
+  status: 'active' as 'active' | 'inactive',
+  lastLogin: new Date(),
+  createdAt: new Date(),
   profileImage: 'https://example.com/profile.jpg',
   vehicles: [
     {

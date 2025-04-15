@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, Vibration } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -30,7 +30,8 @@ class SecurityService {
   private static instance: SecurityService;
   private emergencyContacts: EmergencyContact[] = [];
   private locationHistory: LocationData[] = [];
-  private isPanicModeActive: boolean = false;
+  private panicModeActive: boolean = false;
+  private lastLocation: Location.LocationObject | null = null;
 
   private constructor() {}
 
@@ -103,32 +104,118 @@ class SecurityService {
     }
   }
 
-  // Botão de pânico
-  async activatePanicMode(): Promise<void> {
+  // Ativa o modo de pânico
+  public async activatePanicMode(): Promise<void> {
     try {
-      this.isPanicModeActive = true;
+      this.panicModeActive = true;
       
       // Obtém a localização atual
-      const location = await Location.getCurrentPositionAsync({});
+      const location = await this.getCurrentLocation();
+      if (location) {
+        this.lastLocation = location;
+        await this.sendEmergencyAlert(location);
+      }
       
-      // Envia alerta para autoridades
-      await this.sendEmergencyAlert(location);
+      // Notifica o usuário
+      this.notifyUserOfPanicMode();
       
-      // Notifica contatos de emergência
-      await this.notifyEmergencyContacts(location);
-      
-      // Inicia gravação de áudio/vídeo
-      await this.startEmergencyRecording();
-      
-      Alert.alert(
-        'Modo de Emergência Ativado',
-        'Autoridades e contatos de emergência foram notificados.',
-        [{ text: 'OK' }]
-      );
+      console.log('Modo de pânico ativado');
     } catch (error) {
-      console.error('Erro ao ativar modo de emergência:', error);
-      throw error;
+      console.error('Erro ao ativar modo de pânico:', error);
+      this.panicModeActive = false;
     }
+  }
+
+  // Desativa o modo de pânico
+  public deactivatePanicMode(): void {
+    this.panicModeActive = false;
+    console.log('Modo de pânico desativado');
+  }
+
+  // Obtém a localização atual
+  private async getCurrentLocation(): Promise<Location.LocationObject | null> {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        throw new Error('Permissão de localização negada');
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High
+      });
+      
+      return location;
+    } catch (error) {
+      console.error('Erro ao obter localização:', error);
+      return null;
+    }
+  }
+
+  // Envia alerta de emergência
+  private async sendEmergencyAlert(location: Location.LocationObject): Promise<void> {
+    try {
+      // Em um ambiente real, enviaria para um servidor
+      // Aqui apenas simulamos o envio
+      console.log('Enviando alerta de emergência:', location);
+      
+      // Salva o alerta no histórico
+      await this.saveEmergencyAlert(location);
+    } catch (error) {
+      console.error('Erro ao enviar alerta de emergência:', error);
+    }
+  }
+
+  // Salva o alerta de emergência no histórico
+  private async saveEmergencyAlert(location: Location.LocationObject): Promise<void> {
+    try {
+      const alert = {
+        timestamp: Date.now(),
+        location: {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude
+        }
+      };
+      
+      const existingAlerts = await AsyncStorage.getItem('emergency_alerts');
+      const alerts = existingAlerts ? JSON.parse(existingAlerts) : [];
+      
+      alerts.push(alert);
+      
+      await AsyncStorage.setItem('emergency_alerts', JSON.stringify(alerts));
+    } catch (error) {
+      console.error('Erro ao salvar alerta de emergência:', error);
+    }
+  }
+
+  // Notifica o usuário sobre o modo de pânico
+  private notifyUserOfPanicMode(): void {
+    // Vibra o dispositivo para alertar o usuário
+    Vibration.vibrate([500, 500, 500], true);
+    
+    // Em um ambiente real, enviaria notificação push
+    // Aqui apenas registramos no console
+    console.log('Notificando usuário sobre modo de pânico');
+  }
+
+  // Obtém o histórico de alertas de emergência
+  public async getEmergencyAlerts(): Promise<any[]> {
+    try {
+      const alerts = await AsyncStorage.getItem('emergency_alerts');
+      return alerts ? JSON.parse(alerts) : [];
+    } catch (error) {
+      console.error('Erro ao obter histórico de alertas:', error);
+      return [];
+    }
+  }
+
+  // Verifica se o modo de pânico está ativo
+  public isPanicModeActive(): boolean {
+    return this.panicModeActive;
+  }
+
+  // Obtém a última localização conhecida
+  public getLastLocation(): Location.LocationObject | null {
+    return this.lastLocation;
   }
 
   // Histórico detalhado com fotos e avaliações
@@ -160,12 +247,6 @@ class SecurityService {
     console.log('Enviando localização:', locationData);
   }
 
-  private async sendEmergencyAlert(location: Location.LocationObject): Promise<void> {
-    // Implementar lógica de envio de alerta para autoridades
-    const emergencyMessage = `🚨 ALERTA DE EMERGÊNCIA 🚨\nLocalização: ${location.coords.latitude}, ${location.coords.longitude}`;
-    console.log('Enviando alerta:', emergencyMessage);
-  }
-
   private async notifyEmergencyContacts(location: Location.LocationObject): Promise<void> {
     // Implementar lógica de notificação para contatos de emergência
     for (const contact of this.emergencyContacts) {
@@ -173,9 +254,28 @@ class SecurityService {
     }
   }
 
-  private async startEmergencyRecording(): Promise<void> {
-    // Implementar lógica de gravação de áudio/vídeo
-    console.log('Iniciando gravação de emergência');
+  // Inicia o monitoramento de acidentes
+  async startAccidentMonitoring(): Promise<void> {
+    // Implementar lógica de monitoramento de acidentes
+    console.log('Monitoramento de acidentes iniciado pelo SecurityService');
+  }
+
+  // Para o monitoramento de acidentes
+  stopAccidentMonitoring(): void {
+    console.log('Monitoramento de acidentes parado pelo SecurityService');
+  }
+
+  // Obtém o histórico de acidentes
+  async getAccidentHistory(): Promise<any[]> {
+    // Implementar lógica para obter histórico de acidentes
+    console.log('Obtendo histórico de acidentes pelo SecurityService');
+    return [];
+  }
+
+  // Contata serviços de emergência em caso de acidente
+  async contactEmergencyServices(accidentData: any): Promise<void> {
+    // Implementar lógica para contatar serviços de emergência
+    console.log('Contatando serviços de emergência pelo SecurityService');
   }
 }
 

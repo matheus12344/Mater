@@ -13,7 +13,9 @@ import {
   Share,
   Alert,
   Linking,
-  Vibration
+  Vibration,
+  ScrollView,
+  Modal
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +25,7 @@ import * as Contacts from 'expo-contacts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SecurityService from '../services/SecurityService';
 import SmartFeaturesService from '../services/SmartFeaturesService';
+import AccidentDetectionService from '../services/AccidentDetectionService';
 
 type EmergencyScreenRouteProp = { 
     onback: (index: number) => void;
@@ -50,9 +53,15 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
   });
   const [driverVerification, setDriverVerification] = useState<any>(null);
   const [serviceHistory, setServiceHistory] = useState<any[]>([]);
+  const [accidentHistory, setAccidentHistory] = useState<any[]>([]);
+  const [showFirstAidGuide, setShowFirstAidGuide] = useState(false);
+  const [showHospitalLocator, setShowHospitalLocator] = useState(false);
+  const [nearbyHospitals, setNearbyHospitals] = useState<any[]>([]);
+  const [isAccidentMonitoringActive, setIsAccidentMonitoringActive] = useState(false);
 
   const securityService = SecurityService.getInstance();
   const smartFeaturesService = SmartFeaturesService.getInstance();
+  const accidentDetectionService = AccidentDetectionService.getInstance();
 
   // Carrega contatos de emergência
   const loadEmergencyContacts = async () => {
@@ -118,6 +127,8 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
   // Carregar dados de segurança
   useEffect(() => {
     loadSecurityData();
+    loadAccidentHistory();
+    startAccidentMonitoring();
   }, []);
 
   const loadSecurityData = async () => {
@@ -130,6 +141,32 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
     } catch (error) {
       console.error('Erro ao carregar dados de segurança:', error);
     }
+  };
+
+  // Carrega histórico de acidentes
+  const loadAccidentHistory = async () => {
+    try {
+      const history = await securityService.getAccidentHistory();
+      setAccidentHistory(history);
+    } catch (error) {
+      console.error('Erro ao carregar histórico de acidentes:', error);
+    }
+  };
+
+  // Inicia o monitoramento de acidentes
+  const startAccidentMonitoring = async () => {
+    try {
+      await securityService.startAccidentMonitoring();
+      setIsAccidentMonitoringActive(true);
+    } catch (error) {
+      console.error('Erro ao iniciar monitoramento de acidentes:', error);
+    }
+  };
+
+  // Para o monitoramento de acidentes
+  const stopAccidentMonitoring = () => {
+    securityService.stopAccidentMonitoring();
+    setIsAccidentMonitoringActive(false);
   };
 
   React.useEffect(() => {
@@ -237,38 +274,7 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
   };
 
   const handleFirstAid = () => {
-    Alert.alert(
-      'Instruções de Emergência',
-      'Escolha o tipo de instrução:',
-      [
-        { 
-          text: 'Primeiros Socorros', 
-          onPress: () => Alert.alert(
-            'Primeiros Socorros',
-            '1. Mantenha a calma\n' +
-            '2. Verifique se a área é segura\n' +
-            '3. Verifique consciência da vítima\n' +
-            '4. Chame ajuda profissional\n' +
-            '5. Verifique respiração\n' +
-            '6. Inicie RCP se necessário\n' +
-            '7. Controle sangramentos\n' +
-            '8. Mantenha a vítima aquecida'
-          )
-        },
-        { 
-          text: 'Pane no Veículo', 
-          onPress: () => Alert.alert(
-            'Em caso de pane',
-            '1. Ligue o pisca-alerta\n' +
-            '2. Pare em local seguro\n' +
-            '3. Use o triângulo de sinalização\n' +
-            '4. Mantenha-se fora do veículo\n' +
-            '5. Aguarde o socorro em local seguro'
-          )
-        },
-        { text: 'Cancelar', style: 'cancel' }
-      ]
-    );
+    setShowFirstAidGuide(true);
   };
 
   const handleEmergencyCall = async () => {
@@ -297,6 +303,57 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
       ]
     );
   }
+
+  // Busca hospitais próximos
+  const findNearbyHospitals = async () => {
+    try {
+      if (!currentLocation) {
+        Alert.alert('Erro', 'Localização atual não disponível');
+        return;
+      }
+
+      // Em um ambiente real, faria uma chamada para uma API de hospitais
+      // Aqui simulamos com dados estáticos
+      const hospitals = [
+        {
+          id: '1',
+          name: 'Hospital São Lucas',
+          distance: '1.2 km',
+          rating: 4.5,
+          location: {
+            latitude: currentLocation.latitude + 0.002,
+            longitude: currentLocation.longitude + 0.002
+          }
+        },
+        {
+          id: '2',
+          name: 'Clínica Emergencial',
+          distance: '2.5 km',
+          rating: 4.2,
+          location: {
+            latitude: currentLocation.latitude - 0.003,
+            longitude: currentLocation.longitude + 0.001
+          }
+        },
+        {
+          id: '3',
+          name: 'Centro Médico Central',
+          distance: '3.8 km',
+          rating: 4.7,
+          location: {
+            latitude: currentLocation.latitude + 0.001,
+            longitude: currentLocation.longitude - 0.004
+          }
+        }
+      ];
+
+      setNearbyHospitals(hospitals);
+      setShowHospitalLocator(true);
+    } catch (error) {
+      console.error('Erro ao buscar hospitais próximos:', error);
+      Alert.alert('Erro', 'Não foi possível encontrar hospitais próximos');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -359,6 +416,19 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
                   lineDashPattern={[1]}
                 />
               )}
+
+              {/* Marcadores de hospitais */}
+              {showHospitalLocator && nearbyHospitals.map(hospital => (
+                <Marker
+                  key={hospital.id}
+                  coordinate={hospital.location}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                >
+                  <View style={styles.hospitalMarker}>
+                    <Ionicons name="medkit" size={24} color="#FFF" />
+                  </View>
+                </Marker>
+              ))}
             </MapView>
           ) : (
             <View style={styles.loadingMap}>
@@ -440,6 +510,21 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
                   </View>
                 </View>
               )}
+
+              {/* Histórico de Acidentes */}
+              {accidentHistory.length > 0 && (
+                <View style={styles.accidentHistory}>
+                  <Text style={styles.historyTitle}>Último Acidente Detectado</Text>
+                  <View style={styles.historyItem}>
+                    <Text style={styles.historyDate}>
+                      {new Date(accidentHistory[0].timestamp).toLocaleDateString()}
+                    </Text>
+                    <Text style={styles.historySeverity}>
+                      Severidade: {accidentHistory[0].severity}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
 
             {/* Ações Rápidas */}
@@ -493,10 +578,162 @@ const EmergencyScreen = ({ route }: { route: EmergencyScreenRouteProp }) => {
                 </View>
                 <Text style={styles.buttonText}>Verificar Motorista</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, {width: '45%'}]}
+                onPress={findNearbyHospitals}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="medkit" size={24} color="#FF3B30" />
+                </View>
+                <Text style={styles.buttonText}>Hospitais Próximos</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, {width: '50%'}]}
+                onPress={() => setIsAccidentMonitoringActive(!isAccidentMonitoringActive)}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Ionicons 
+                    name={isAccidentMonitoringActive ? "shield-checkmark" : "shield-outline"} 
+                    size={24} 
+                    color="#FF3B30" 
+                  />
+                </View>
+                <Text style={styles.buttonText}>
+                  {isAccidentMonitoringActive ? "Monitoramento Ativo" : "Ativar Monitoramento"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </Animated.ScrollView>
 
+        {/* Modal de Guia de Primeiros Socorros */}
+        <Modal
+          visible={showFirstAidGuide}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowFirstAidGuide(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Guia de Primeiros Socorros</Text>
+                <TouchableOpacity onPress={() => setShowFirstAidGuide(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.modalScroll}>
+                <View style={styles.guideSection}>
+                  <Text style={styles.guideTitle}>1. Avaliação Inicial</Text>
+                  <Text style={styles.guideText}>
+                    • Verifique se a área é segura para abordagem{'\n'}
+                    • Verifique o nível de consciência da vítima{'\n'}
+                    • Chame ajuda profissional imediatamente{'\n'}
+                    • Verifique respiração e pulso
+                  </Text>
+                </View>
+                
+                <View style={styles.guideSection}>
+                  <Text style={styles.guideTitle}>2. Suporte Básico de Vida</Text>
+                  <Text style={styles.guideText}>
+                    • Posicione a vítima em decúbito dorsal{'\n'}
+                    • Abra as vias aéreas{'\n'}
+                    • Inicie RCP se necessário (30 compressões : 2 ventilações){'\n'}
+                    • Use DEA se disponível
+                  </Text>
+                </View>
+                
+                <View style={styles.guideSection}>
+                  <Text style={styles.guideTitle}>3. Controle de Sangramento</Text>
+                  <Text style={styles.guideText}>
+                    • Aplique pressão direta sobre o ferimento{'\n'}
+                    • Elevar o membro lesionado{'\n'}
+                    • Aplicar curativo compressivo{'\n'}
+                    • Manter a vítima aquecida
+                  </Text>
+                </View>
+                
+                <View style={styles.guideSection}>
+                  <Text style={styles.guideTitle}>4. Imobilização</Text>
+                  <Text style={styles.guideText}>
+                    • Imobilize a coluna cervical se houver suspeita de trauma{'\n'}
+                    • Imobilize fraturas expostas{'\n'}
+                    • Evite movimentar a vítima desnecessariamente
+                  </Text>
+                </View>
+                
+                <View style={styles.guideSection}>
+                  <Text style={styles.guideTitle}>5. Emergências Específicas</Text>
+                  <Text style={styles.guideText}>
+                    • Queimaduras: Resfrie com água corrente{'\n'}
+                    • Convulsões: Proteja a cabeça e aguarde passar{'\n'}
+                    • Intoxicação: Identifique a substância{'\n'}
+                    • Parada cardíaca: Inicie RCP imediatamente
+                  </Text>
+                </View>
+              </ScrollView>
+              
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={() => setShowFirstAidGuide(false)}
+              >
+                <Text style={styles.modalButtonText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Modal de Localização de Hospitais */}
+        <Modal
+          visible={showHospitalLocator}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowHospitalLocator(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Hospitais Próximos</Text>
+                <TouchableOpacity onPress={() => setShowHospitalLocator(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.modalScroll}>
+                {nearbyHospitals.map(hospital => (
+                  <TouchableOpacity 
+                    key={hospital.id}
+                    style={styles.hospitalItem}
+                    onPress={() => {
+                      Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${hospital.location.latitude},${hospital.location.longitude}`);
+                      setShowHospitalLocator(false);
+                    }}
+                  >
+                    <View style={styles.hospitalInfo}>
+                      <Text style={styles.hospitalName}>{hospital.name}</Text>
+                      <View style={styles.hospitalDetails}>
+                        <Ionicons name="navigate" size={16} color="#FF3B30" />
+                        <Text style={styles.hospitalDistance}>{hospital.distance}</Text>
+                        <Ionicons name="star" size={16} color="#FFC107" />
+                        <Text style={styles.hospitalRating}>{hospital.rating}</Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color="#999" />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={() => setShowHospitalLocator(false)}
+              >
+                <Text style={styles.modalButtonText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
     </SafeAreaView>
   );
 };
@@ -715,6 +952,106 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  hospitalMarker: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 20,
+    padding: 4,
+  },
+  accidentHistory: {
+    marginTop: 15,
+    padding: 12,
+    backgroundColor: 'rgba(255,59,48,0.1)',
+    borderRadius: 8,
+  },
+  historySeverity: {
+    color: '#FFF',
+    fontSize: 14,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalScroll: {
+    padding: 16,
+  },
+  guideSection: {
+    marginBottom: 20,
+  },
+  guideTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  guideText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 22,
+  },
+  modalButton: {
+    backgroundColor: '#FF3B30',
+    padding: 16,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  hospitalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  hospitalInfo: {
+    flex: 1,
+  },
+  hospitalName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
+  },
+  hospitalDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  hospitalDistance: {
+    fontSize: 14,
+    color: '#666',
+    marginRight: 12,
+    marginLeft: 4,
+  },
+  hospitalRating: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
   },
 });
 

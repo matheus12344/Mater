@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   FlatList, 
   View, 
@@ -14,7 +14,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
-  ScrollView
+  ScrollView,
+  SafeAreaView
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { CommunityPost } from '../types/index';
@@ -22,6 +23,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { scale } from 'react-native-size-matters';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
@@ -30,8 +34,14 @@ const mockPosts: CommunityPost[] = [
   {
     id: '1',
     user: {
+      id: '1',
       name: 'João Silva',
       email: 'joao@example.com',
+      phone: '(11) 99999-9999',
+      role: 'user',
+      status: 'active',
+      lastLogin: new Date(),
+      createdAt: new Date(),
       profileImage: 'https://randomuser.me/api/portraits/men/32.jpg',
       vehicles: [],
       referralCode: 'ABC123'
@@ -42,8 +52,14 @@ const mockPosts: CommunityPost[] = [
       { 
         id: '1', 
         user: { 
+          id: '2',
           name: 'Maria', 
           email: 'maria@example.com',
+          phone: '(11) 98888-8888',
+          role: 'user',
+          status: 'active',
+          lastLogin: new Date(),
+          createdAt: new Date(),
           profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
           vehicles: [],
           referralCode: 'DEF456'
@@ -54,8 +70,14 @@ const mockPosts: CommunityPost[] = [
       { 
         id: '2', 
         user: { 
+          id: '3',
           name: 'Pedro', 
           email: 'pedro@example.com',
+          phone: '(11) 97777-7777',
+          role: 'user',
+          status: 'active',
+          lastLogin: new Date(),
+          createdAt: new Date(),
           profileImage: 'https://randomuser.me/api/portraits/men/67.jpg',
           vehicles: [],
           referralCode: 'GHI789'
@@ -70,8 +92,14 @@ const mockPosts: CommunityPost[] = [
   {
     id: '2',
     user: {
+      id: '4',
       name: 'Ana Oliveira',
       email: 'ana@example.com',
+      phone: '(11) 96666-6666',
+      role: 'user',
+      status: 'active',
+      lastLogin: new Date(),
+      createdAt: new Date(),
       profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
       vehicles: [],
       referralCode: 'JKL012'
@@ -82,8 +110,14 @@ const mockPosts: CommunityPost[] = [
       { 
         id: '3', 
         user: { 
+          id: '5',
           name: 'Carlos', 
           email: 'carlos@example.com',
+          phone: '(11) 95555-5555',
+          role: 'user',
+          status: 'active',
+          lastLogin: new Date(),
+          createdAt: new Date(),
           profileImage: 'https://randomuser.me/api/portraits/men/32.jpg',
           vehicles: [],
           referralCode: 'MNO345'
@@ -98,8 +132,14 @@ const mockPosts: CommunityPost[] = [
   {
     id: '3',
     user: {
+      id: '6',
       name: 'Lucas Mendes',
       email: 'lucas@example.com',
+      phone: '(11) 94444-4444',
+      role: 'user',
+      status: 'active',
+      lastLogin: new Date(),
+      createdAt: new Date(),
       profileImage: 'https://randomuser.me/api/portraits/men/67.jpg',
       vehicles: [],
       referralCode: 'PQR678'
@@ -110,8 +150,14 @@ const mockPosts: CommunityPost[] = [
       { 
         id: '4', 
         user: { 
+          id: '7',
           name: 'Fernanda', 
           email: 'fernanda@example.com',
+          phone: '(11) 93333-3333',
+          role: 'user',
+          status: 'active',
+          lastLogin: new Date(),
+          createdAt: new Date(),
           profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
           vehicles: [],
           referralCode: 'STU901'
@@ -122,8 +168,14 @@ const mockPosts: CommunityPost[] = [
       { 
         id: '5', 
         user: { 
+          id: '6',
           name: 'Lucas Mendes', 
           email: 'lucas@example.com',
+          phone: '(11) 94444-4444',
+          role: 'user',
+          status: 'active',
+          lastLogin: new Date(),
+          createdAt: new Date(),
           profileImage: 'https://randomuser.me/api/portraits/men/67.jpg',
           vehicles: [],
           referralCode: 'PQR678'
@@ -245,69 +297,86 @@ interface CommunityScreenProps {
 }
 
 const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
-  const { colors, styles: themeStyles } = useTheme();
+  const { colors } = useTheme();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [newPost, setNewPost] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  
-  // Estados para gamificação
   const [showGamification, setShowGamification] = useState(false);
   const [activeTab, setActiveTab] = useState<'challenges' | 'achievements' | 'leaderboard'>('challenges');
-  const [userPoints, setUserPoints] = useState(320);
-  const [userRank, setUserRank] = useState(8);
-  const [challenges, setChallenges] = useState(mockChallenges);
-  const [achievements, setAchievements] = useState(mockAchievements);
-  const [leaderboard, setLeaderboard] = useState(mockLeaderboard);
   
+  const insets = useSafeAreaInsets();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const inputRef = useRef<TextInput>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Animation for header
+  const headerHeight = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [120, 70],
+    extrapolate: 'clamp',
+  });
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 60, 90],
+    outputRange: [1, 0.3, 0],
+    extrapolate: 'clamp',
+  });
+
   useEffect(() => {
-    // Simulando carregamento de dados
+    // Simulate loading data
     const timer = setTimeout(() => {
       setPosts(mockPosts);
       setIsLoading(false);
+      
+      // Start fade-in animation
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
     }, 1000);
-    
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }).start();
     
     return () => clearTimeout(timer);
   }, []);
-  
-  const onRefresh = React.useCallback(() => {
+
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // Simulando atualização de dados
+    // Simulate refreshing data
     setTimeout(() => {
-      setPosts([...mockPosts].sort(() => Math.random() - 0.5));
+      setPosts(mockPosts);
       setRefreshing(false);
     }, 1500);
   }, []);
-  
+
   const handlePost = () => {
     if (!newPost.trim() && !selectedImage) return;
     
     setIsPosting(true);
     
-    // Simulando envio de post
+    // Simulate posting
     setTimeout(() => {
       const newPostObj: CommunityPost = {
         id: Date.now().toString(),
         user: {
-          name: 'Você',
-          email: 'user@example.com',
+          id: 'current-user',
+          name: userData?.name || 'Usuário',
+          email: userData?.email || 'user@example.com',
+          phone: '(11) 99999-9999',
+          role: 'user',
+          status: 'active',
+          lastLogin: new Date(),
+          createdAt: new Date(),
           profileImage: userData?.profileImage || 'https://randomuser.me/api/portraits/men/32.jpg',
-          vehicles: [],
+          vehicles: userData?.vehicles || [],
           referralCode: 'XYZ123'
         },
         content: newPost,
         likes: 0,
         comments: [],
-        routeSnapshot: selectedImage || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+        routeSnapshot: selectedImage || '',
         timestamp: new Date()
       };
       
@@ -315,40 +384,9 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
       setNewPost('');
       setSelectedImage(null);
       setIsPosting(false);
-      
-      // Atualizar desafios após criar um post
-      updateChallengesAfterPost();
     }, 1000);
   };
-  
-  const updateChallengesAfterPost = () => {
-    setChallenges(prevChallenges => 
-      prevChallenges.map(challenge => {
-        if (challenge.id === '2') {
-          const newProgress = challenge.progress + 1;
-          const completed = newProgress >= challenge.total;
-          
-          if (completed && !challenge.completed) {
-            // Adicionar pontos quando completar o desafio
-            setUserPoints(prev => prev + challenge.reward);
-            
-            // Mostrar notificação de conquista
-            setTimeout(() => {
-              alert(`Parabéns! Você completou o desafio "${challenge.title}" e ganhou ${challenge.reward} pontos!`);
-            }, 500);
-          }
-          
-          return {
-            ...challenge,
-            progress: newProgress,
-            completed: completed
-          };
-        }
-        return challenge;
-      })
-    );
-  };
-  
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
@@ -368,7 +406,7 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
       setSelectedImage(result.assets[0].uri);
     }
   };
-  
+
   const handleLike = (postId: string) => {
     setPosts(posts.map(post => 
       post.id === postId 
@@ -376,7 +414,7 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
         : post
     ));
   };
-  
+
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -390,7 +428,7 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
   const renderPost = ({ item, index }: { item: CommunityPost; index: number }) => (
     <Animated.View 
       style={[
-        styles.postCard, 
+        styles.postContainer,
         { 
           backgroundColor: colors.card,
           opacity: fadeAnim,
@@ -405,7 +443,7 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
     >
       <View style={styles.postHeader}>
         <Image source={{ uri: item.user.profileImage }} style={styles.avatar} />
-        <View style={styles.userInfo}>
+        <View style={styles.postInfo}>
           <Text style={[styles.userName, { color: colors.text }]}>{item.user.name}</Text>
           <Text style={[styles.timestamp, { color: colors.placeholder }]}>
             {formatTimeAgo(item.timestamp)}
@@ -416,7 +454,9 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
       <Text style={[styles.postContent, { color: colors.text }]}>{item.content}</Text>
       
       {item.routeSnapshot && (
-        <Image source={{ uri: item.routeSnapshot }} style={styles.routeImage} />
+        <View style={styles.routeContainer}>
+          <Image source={{ uri: item.routeSnapshot }} style={styles.routeImage} />
+        </View>
       )}
       
       <View style={styles.postActions}>
@@ -471,26 +511,6 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
             </TouchableOpacity>
           </View>
           
-          <View style={styles.userStatsContainer}>
-            <View style={[styles.userStatItem, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="star" size={scale(20)} color={colors.primary} />
-              <Text style={[styles.userStatValue, { color: colors.text }]}>{userPoints}</Text>
-              <Text style={[styles.userStatLabel, { color: colors.placeholder }]}>Pontos</Text>
-            </View>
-            <View style={[styles.userStatItem, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="trophy" size={scale(20)} color={colors.primary} />
-              <Text style={[styles.userStatValue, { color: colors.text }]}>{userRank}º</Text>
-              <Text style={[styles.userStatLabel, { color: colors.placeholder }]}>Ranking</Text>
-            </View>
-            <View style={[styles.userStatItem, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="ribbon" size={scale(20)} color={colors.primary} />
-              <Text style={[styles.userStatValue, { color: colors.text }]}>
-                {achievements.filter(a => a.unlocked).length}
-              </Text>
-              <Text style={[styles.userStatLabel, { color: colors.placeholder }]}>Conquistas</Text>
-            </View>
-          </View>
-          
           <View style={styles.tabContainer}>
             <TouchableOpacity 
               style={[
@@ -539,7 +559,7 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
           <ScrollView style={styles.tabContent}>
             {activeTab === 'challenges' && (
               <View>
-                {challenges.map(challenge => (
+                {mockChallenges.map(challenge => (
                   <View key={challenge.id} style={[styles.challengeItem, { backgroundColor: colors.background }]}>
                     <View style={styles.challengeHeader}>
                       <View style={[styles.challengeIconContainer, { backgroundColor: colors.primary + '20' }]}>
@@ -587,7 +607,7 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
             
             {activeTab === 'achievements' && (
               <View>
-                {achievements.map(achievement => (
+                {mockAchievements.map(achievement => (
                   <View key={achievement.id} style={[styles.achievementItem, { backgroundColor: colors.background }]}>
                     <View style={[
                       styles.achievementIconContainer, 
@@ -626,7 +646,7 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
             
             {activeTab === 'leaderboard' && (
               <View>
-                {leaderboard.map((user, index) => (
+                {mockLeaderboard.map((user, index) => (
                   <View key={user.id} style={[styles.leaderboardItem, { backgroundColor: colors.background }]}>
                     <View style={styles.rankContainer}>
                       {index < 3 ? (
@@ -673,125 +693,130 @@ const CommunityScreen: React.FC<CommunityScreenProps> = ({ userData }) => {
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View 
         style={[
-          styles.header, 
+          styles.header,
           { 
-            backgroundColor: colors.card,
-            opacity: fadeAnim,
-            transform: [{ 
-              translateY: fadeAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [-50, 0]
-              })
-            }]
+            height: headerHeight,
+            paddingTop: insets.top,
+            backgroundColor: colors.background,
           }
         ]}
       >
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Comunidade Mater
-        </Text>
-        <Text style={[styles.headerSubtitle, { color: colors.placeholder }]}>
-          Compartilhe suas experiências
-        </Text>
+        <Animated.View style={[styles.headerContent, { opacity: headerOpacity }]}>
+          <Text style={[styles.title, { color: colors.text }]}>
+            Comunidade
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.text }]}>
+            Conecte-se com outros motoristas
+          </Text>
+        </Animated.View>
 
-        {/* Gamificação */}
-        
-        <TouchableOpacity 
-          style={[styles.gamificationButton, { backgroundColor: colors.primary }]}
-          onPress={() => setShowGamification(true)}
-        >
-          <Ionicons name="trophy" size={scale(18)} color="#fff" />
-          <Text style={styles.gamificationButtonText}>Gamificação</Text>
-        </TouchableOpacity>
+        <View style={styles.filterContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScroll}
+          >
+            {['all', 'recent', 'popular', 'nearby'].map((filter) => (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.filterButton,
+                  { backgroundColor: colors.primary },
+                ]}
+              >
+                <Text 
+                  style={[
+                    styles.filterText,
+                  ]}
+                >
+                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
       </Animated.View>
-      
+
       <FlatList
         data={posts}
         renderItem={renderPost}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
+        keyExtractor={item => item.id}
+        contentContainerStyle={[styles.listContent, {marginTop: scale(50)}]}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[colors.primary]}
             tintColor={colors.primary}
           />
         }
-        ListHeaderComponent={
-          <View style={[styles.newPostContainer, { backgroundColor: colors.card }]}>
-            <View style={styles.postInputContainer}>
-              <Image 
-                source={{ uri: userData?.profileImage || 'https://randomuser.me/api/portraits/men/32.jpg' }} 
-                style={styles.userAvatar} 
-              />
-              <TextInput
-                style={[styles.postInput, { color: colors.text }]}
-                placeholder="Compartilhe sua experiência..."
-                placeholderTextColor={colors.placeholder}
-                value={newPost}
-                onChangeText={setNewPost}
-                multiline
-              />
-            </View>
-            
-            {selectedImage && (
-              <View style={styles.selectedImageContainer}>
-                <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
-                <TouchableOpacity 
-                  style={styles.removeImageButton}
-                  onPress={() => setSelectedImage(null)}
-                >
-                  <Ionicons name="close-circle" size={scale(24)} color="#fff" />
-                </TouchableOpacity>
-              </View>
-            )}
-            
-            <View style={styles.postActionsContainer}>
-              <TouchableOpacity 
-                style={[styles.mediaButton, { backgroundColor: colors.primary + '20' }]}
-                onPress={pickImage}
-              >
-                <Ionicons name="image" size={scale(20)} color={colors.primary} />
-                <Text style={[styles.mediaButtonText, { color: colors.primary }]}>
-                  Foto
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.postButton, 
-                  { 
-                    backgroundColor: colors.primary,
-                    opacity: (newPost.trim() || selectedImage) ? 1 : 0.5
-                  }
-                ]}
-                onPress={handlePost}
-                disabled={!newPost.trim() && !selectedImage || isPosting}
-              >
-                {isPosting ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="send" size={scale(18)} color="#fff" />
-                    <Text style={styles.postButtonText}>Publicar</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        }
       />
-      
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={styles.keyboardAvoidingView}
+      >
+        <BlurView 
+          intensity={100} 
+          style={[styles.inputContainer, { paddingBottom: insets.bottom }]}
+        >
+          <TouchableOpacity 
+            style={[styles.imageButton, { backgroundColor: colors.primary + '20' }]}
+            onPress={pickImage}
+          >
+            <Ionicons name="image-outline" size={scale(24)} color={colors.primary} />
+          </TouchableOpacity>
+          
+          <TextInput
+            ref={inputRef}
+            style={[
+              styles.input,
+              { 
+                backgroundColor: colors.card,
+                color: colors.text,
+              }
+            ]}
+            placeholder="Compartilhe sua experiência..."
+            placeholderTextColor={colors.placeholder}
+            value={newPost}
+            onChangeText={setNewPost}
+            multiline
+          />
+          
+          <TouchableOpacity 
+            style={[
+              styles.postButton,
+              { backgroundColor: colors.primary }
+            ]}
+            onPress={handlePost}
+            disabled={isPosting}
+          >
+            {isPosting ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Ionicons name="send" size={scale(20)} color="#FFFFFF" />
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.gamificationButton, { backgroundColor: colors.primary }]}
+            onPress={() => setShowGamification(true)}
+          >
+            <Ionicons name="trophy-outline" size={scale(20)} color="#FFFFFF" />
+          </TouchableOpacity>
+        </BlurView>
+      </KeyboardAvoidingView>
+
       {renderGamificationModal()}
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -811,169 +836,152 @@ const styles = StyleSheet.create({
     fontSize: scale(16),
   },
   header: {
-    padding: scale(20),
-    borderBottomLeftRadius: scale(20),
-    borderBottomRightRadius: scale(20),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
-  headerTitle: {
-    fontSize: scale(24),
-    fontWeight: 'bold',
-    marginBottom: scale(5),
-  },
-  headerSubtitle: {
-    fontSize: scale(14),
-  },
-  listContent: {
-    paddingBottom: scale(30),
-  },
-  newPostContainer: {
-    margin: scale(16),
-    borderRadius: scale(16),
+  headerContent: {
     padding: scale(16),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
   },
-  postInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  title: {
+    fontSize: scale(28),
+    fontWeight: 'bold',
   },
-  userAvatar: {
-    width: scale(40),
-    height: scale(40),
-    borderRadius: scale(20),
-    marginRight: scale(10),
-  },
-  postInput: {
-    flex: 1,
-    minHeight: scale(40),
-    maxHeight: scale(100),
+  subtitle: {
     fontSize: scale(16),
+    marginTop: scale(4),
   },
-  postActionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: scale(10),
+  filterContainer: {
+    paddingHorizontal: scale(16),
+    paddingBottom: scale(8),
   },
-  mediaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: scale(8),
-    borderRadius: scale(8),
+  filterScroll: {
+    paddingRight: scale(16),
   },
-  mediaButtonText: {
-    marginLeft: scale(5),
+  filterButton: {
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(8),
+    borderRadius: scale(20),
+    marginRight: scale(8),
+  },
+  filterText: {
     fontSize: scale(14),
     fontWeight: '500',
+    color: 'white'
   },
-  postButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: scale(10),
-    borderRadius: scale(8),
+  listContent: {
+    paddingTop: scale(120),
+    paddingBottom: scale(80),
   },
-  postButtonText: {
-    color: '#fff',
-    marginLeft: scale(5),
-    fontSize: scale(14),
-    fontWeight: '600',
-  },
-  selectedImageContainer: {
-    marginTop: scale(10),
-    position: 'relative',
-  },
-  selectedImage: {
-    width: '100%',
-    height: scale(200),
-    borderRadius: scale(8),
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: scale(5),
-    right: scale(5),
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: scale(12),
-  },
-  postCard: {
+  postContainer: {
     marginHorizontal: scale(16),
-    marginTop: scale(16),
+    marginVertical: scale(8),
     borderRadius: scale(16),
     padding: scale(16),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 3,
   },
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: scale(10),
+    marginBottom: scale(12),
   },
   avatar: {
     width: scale(40),
     height: scale(40),
     borderRadius: scale(20),
-    marginRight: scale(10),
+    marginRight: scale(12),
   },
-  userInfo: {
+  postInfo: {
     flex: 1,
   },
   userName: {
     fontSize: scale(16),
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   timestamp: {
     fontSize: scale(12),
+    marginTop: scale(2),
   },
   postContent: {
     fontSize: scale(16),
-    lineHeight: scale(22),
-    marginBottom: scale(10),
+    lineHeight: scale(24),
+    marginBottom: scale(12),
+  },
+  routeContainer: {
+    marginVertical: scale(12),
+    borderRadius: scale(12),
+    overflow: 'hidden',
   },
   routeImage: {
     width: '100%',
     height: scale(200),
-    borderRadius: scale(12),
-    marginBottom: scale(10),
+    resizeMode: 'cover',
   },
   postActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: scale(10),
+    marginTop: scale(12),
+    paddingTop: scale(12),
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: scale(8),
+    marginRight: scale(24),
   },
   actionText: {
-    marginLeft: scale(5),
+    marginLeft: scale(4),
     fontSize: scale(14),
   },
-  commentsContainer: {
-    marginTop: scale(10),
-    paddingTop: scale(10),
-    borderTopWidth: 1,
+  keyboardAvoidingView: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
-  commentItem: {
+  inputContainer: {
     flexDirection: 'row',
-    marginBottom: scale(5),
+    alignItems: 'center',
+    padding: scale(16),
   },
-  commentUser: {
-    fontWeight: 'bold',
-    marginRight: scale(5),
+  imageButton: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: scale(8),
   },
-  commentText: {
+  input: {
     flex: 1,
+    borderRadius: scale(20),
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(12),
+    marginRight: scale(8),
+    fontSize: scale(16),
+  },
+  postButton: {
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(12),
+    borderRadius: scale(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  postButtonText: {
+    color: '#FFFFFF',
+    fontSize: scale(14),
+    fontWeight: '600',
   },
   gamificationButton: {
     flexDirection: 'row',
@@ -981,8 +989,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: scale(8),
     borderRadius: scale(20),
-    marginTop: scale(10),
-    alignSelf: 'flex-start',
+    marginLeft: scale(8),
   },
   gamificationButtonText: {
     color: '#FFFFFF',
@@ -1009,27 +1016,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: scale(20),
     fontWeight: 'bold',
-  },
-  userStatsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: scale(20),
-  },
-  userStatItem: {
-    flex: 1,
-    alignItems: 'center',
-    padding: scale(12),
-    borderRadius: scale(12),
-    marginHorizontal: scale(5),
-  },
-  userStatValue: {
-    fontSize: scale(18),
-    fontWeight: 'bold',
-    marginTop: scale(5),
-  },
-  userStatLabel: {
-    fontSize: scale(12),
-    marginTop: scale(2),
   },
   tabContainer: {
     flexDirection: 'row',
@@ -1197,5 +1183,22 @@ const styles = StyleSheet.create({
     fontSize: scale(14),
     fontWeight: '600',
     marginLeft: scale(4),
+  },
+  commentsContainer: {
+    marginTop: scale(10),
+  },
+  commentItem: {
+    padding: scale(10),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  commentUser: {
+    fontSize: scale(14),
+    fontWeight: '600',
+  },
+  commentText: {
+    fontSize: scale(14),
+    marginTop: scale(2),
+    color: '#666666',
   },
 });

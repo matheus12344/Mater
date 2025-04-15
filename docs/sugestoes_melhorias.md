@@ -46,11 +46,11 @@
 - _Avaliações e comentários_
 - _Compartilhamento de rotas_
 
-## 8. Recursos de Emergência
-- Detecção automática de acidentes
-- Integração com serviços de emergência
-- Guia de primeiros socorros
-- Localização de hospitais
+## 8. Recursos de Emergência - **FEITO**
+- _Detecção automática de acidentes_
+- _Integração com serviços de emergência_
+- _Guia de primeiros socorros_
+- _Localização de hospitais_
 
 ## 9. Recursos de Personalização
 - Temas personalizáveis
@@ -106,7 +106,7 @@
 - Sistema de garantia estendida
 - Histórico de compras e reposições
 
-## 18. Recursos de Comunidade Especializada
+## 18. Recursos de Comunidade Especializada - **FEITO**
 - Fórum de discussão por modelo de veículo
 - Biblioteca de tutoriais de manutenção
 - Rede de mecânicos certificados

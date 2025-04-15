@@ -43,6 +43,7 @@ import ReferralScreen from './src/pages/ReferralScreen';
 import CommunityScreen from './src/pages/CommunityScreen';
 import SeguroProBenefits from './src/pages/SeguroProBenefits';
 import SeguroPro from './src/pages/SeguroPro';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 // Configurações responsivas
@@ -581,52 +582,53 @@ export default function App() {
   };
 
   return (
-    <AccessibilityProvider>
-      <ThemeProvider>
-        <ActivityProvider>
-          <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
+    <SafeAreaProvider>
+      <AccessibilityProvider>
+        <ThemeProvider>
+          <ActivityProvider>
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+              <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
 
-            {renderContent()}
+              {renderContent()}
 
-            <View style={[styles.footer, { borderTopColor: colors.border }]}>
-              <NavigationButton
-                page="Home"
-                label="Home"
-                icon="home"
-                activePage={activePage}
-                theme={theme}
-                onPress={() => setActivePage('Home')}
-              />
-              <NavigationButton
-                page="Serviços"
-                label="Serviços"
-                icon="tools"
-                activePage={activePage}
-                theme={theme}
-                onPress={() => setActivePage('Serviços')}
-              />
-              <NavigationButton
-                page="Atividade"
-                label="Atividade"
-                icon="clipboard-list"
-                activePage={activePage}
-                theme={theme}
-                onPress={() => setActivePage('Atividade')}
-              />
-              <NavigationButton
-                page="Conta"
-                label="Conta"
-                icon="account"
-                activePage={activePage}
-                theme={theme}
-                onPress={() => setActivePage('Conta')}
-              />
-              
+              <View style={[styles.footer, { borderTopColor: colors.border }]}>
+                <NavigationButton
+                  page="Home"
+                  label="Home"
+                  icon="home"
+                  activePage={activePage}
+                  theme={theme}
+                  onPress={() => setActivePage('Home')}
+                />
+                <NavigationButton
+                  page="Serviços"
+                  label="Serviços"
+                  icon="tools"
+                  activePage={activePage}
+                  theme={theme}
+                  onPress={() => setActivePage('Serviços')}
+                />
+                <NavigationButton
+                  page="Atividade"
+                  label="Atividade"
+                  icon="clipboard-list"
+                  activePage={activePage}
+                  theme={theme}
+                  onPress={() => setActivePage('Atividade')}
+                />
+                <NavigationButton
+                  page="Conta"
+                  label="Conta"
+                  icon="account"
+                  activePage={activePage}
+                  theme={theme}
+                  onPress={() => setActivePage('Conta')}
+                />
+              </View>
             </View>
-          </SafeAreaView>
-        </ActivityProvider>
-      </ThemeProvider>
-    </AccessibilityProvider>
+          </ActivityProvider>
+        </ThemeProvider>
+      </AccessibilityProvider>
+    </SafeAreaProvider>
   );
 }
